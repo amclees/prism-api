@@ -1,0 +1,33 @@
+{
+  "name": "prs-api",
+  "version": "0.0.1",
+  "description": "CSULA PRS document review system REST API",
+  "main": "index.js",
+  "scripts": {
+    "test": "jasmine"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amclees/prs-api.git"
+  },
+  "contributors": [
+    "Leanne David",
+    "Andrew McLees <andrewmclees5@gmail.com>",
+    "Justin Sarenas",
+    "Ben Solis",
+    "Chengyu Sun"
+  ],
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/amclees/prs-api/issues"
+  },
+  "homepage": "https://github.com/amclees/prs-api#readme",
+  "private": true,
+  "dependencies": {
+    "grunt": "^1.0.1",
+    "mongoose": "^4.12.1"
+  },
+  "devDependencies": {
+    "jasmine": "^2.8.0"
+  }
+}
