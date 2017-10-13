@@ -9,9 +9,15 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
 const settings = require('../config/settings.js');
+const validators = require('./validators.js');
 
 const userSchema = new mongoose.Schema({
-  username: {type: String, required: true},
+  username: {
+    type: String,
+    required: true,
+    minlength: settings.minUsernameLength,
+    maxlength: settings.maxUsernameLength
+  },
   email: {type: String, required: true},
   name: {
     first: {type: String, required: true},
@@ -29,6 +35,22 @@ const userSchema = new mongoose.Schema({
   passwordHash: String
 });
 
+userSchema.index({username: 1});
+
+userSchema.path('username').validate({
+  validator: validators.unique('User', 'username'),
+  isAsync: true,
+  message: 'Username must be unique'
+});
+
+userSchema.path('username').validate(function(username) {
+  if (this.isNew || this.isModified('username')) {
+    return /[A-z0-9_-]+/.test(username);
+  } else {
+    return true;
+  }
+}, 'Invalid characters in username');
+
 userSchema.methods = {
   setPassword: function(passwordPlaintext) {
     return bcrypt.hash(passwordPlaintext, settings.saltRounds).then((passwordHash) => {
@@ -45,10 +67,6 @@ userSchema.methods = {
   comparePassword: function(passwordPlaintext) {
     return bcrypt.compare(passwordPlaintext, this.passwordHash);
   }
-};
-
-userSchema.statics = {
-
 };
 
 module.exports = mongoose.model('User', userSchema);
