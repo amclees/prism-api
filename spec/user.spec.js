@@ -10,9 +10,10 @@ mongoose.connect(process.env.DB_HOST, {useMongoClient: true});
 const User = require('../models/user.model');
 
 describe('The user model', () => {
-  it('returns an error if no username is provided', (done) => {
-    const user = new User({
-      username: undefined,
+  let userData;
+  const resetUser = () => {
+    userData = {
+      username: 'username',
       email: 'email@example.com',
       name: {
         first: 'first name',
@@ -20,13 +21,42 @@ describe('The user model', () => {
       },
       internal: true,
       root: false
-    });
+    };
+  };
+  resetUser();
+
+  afterEach(() => {
+    resetUser();
+  });
+
+  it('returns an error if no username is provided', (done) => {
+    userData.username = '';
+    const user = new User(userData);
 
     user.setPassword('password');
 
     user.save((error) => {
       expect(error.message).toBe('User validation failed: username: Path `username` is required.');
       done();
+    });
+  });
+
+  it('returns an error if the username is a duplicate', (done) => {
+    const user1 = new User(userData);
+    const user2 = new User(userData);
+
+    user1.setPassword('password');
+    user2.setPassword('password');
+
+    user1.save((error) => {
+      expect(error).toBe(null);
+      if (error) {
+        winston.log('debug', `Error saving first user in duplicate checking test: ${error.message}`);
+      }
+      user2.save((error2) => {
+        expect(error2).not.toBe(null);
+        done();
+      });
     });
   });
 
