@@ -9,8 +9,8 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const validatorModule = require('validator');
 
-const settings = require('../config/settings.js');
-const validators = require('./validators.js');
+const settings = require('../config/settings');
+const validators = require('./validators');
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -44,13 +44,11 @@ userSchema.path('username').validate({
   message: 'Username must be unique'
 });
 
-userSchema.path('username').validate(function(username) {
-  if (this.isNew || this.isModified('username')) {
-    return /[A-z0-9_-]+/.test(username);
-  } else {
-    return true;
-  }
-}, 'Invalid characters in username');
+userSchema.path('username').validate({
+  validator: validators.noSpecialCharacters('username'),
+  isAsync: false,
+  message: 'Invalid characters in username'
+});
 
 userSchema.path('email').validate({
   validator: validatorModule.isEmail,

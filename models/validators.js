@@ -21,3 +21,16 @@ exports.unique = function(modelName, path) {
     }
   };
 };
+
+exports.noSpecialCharacters = function(path, spaces) {
+  return function(value) {
+    if (this.isNew || this.isModified(path)) {
+      if (spaces) {
+        return /^[A-Za-z0-9_\-\.& ]+$/.test(value);
+      }
+      return /^[A-Za-z0-9_\-\.&]+$/.test(value);
+    } else {
+      return true;
+    }
+  };
+};
