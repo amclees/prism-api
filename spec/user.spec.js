@@ -29,6 +29,15 @@ describe('The user model', () => {
     resetUser();
   });
 
+  beforeEach((done) => {
+    User.remove({}, function(error) {
+      if (error) {
+        winston.log('error', `Error removing all documents from database between tests: ${error.message}`);
+      }
+      done();
+    });
+  });
+
   it('returns an error if no username is provided', (done) => {
     userData.username = '';
     const user = new User(userData);
@@ -41,7 +50,7 @@ describe('The user model', () => {
     });
   });
 
-  it('returns an error if the username is a duplicate', (done) => {
+  it('rejects duplicate usernames', (done) => {
     const user1 = new User(userData);
     const user2 = new User(userData);
 
@@ -66,6 +75,28 @@ describe('The user model', () => {
       winston.log('debug', `User passwordHash=${user.passwordHash}\n`);
       user.comparePassword('password').then((same) => {
         expect(same).toBe(true);
+        done();
+      });
+    });
+  });
+
+  it('rejects invalid emails', (done) => {
+    userData.email = 'example@examplecom';
+    const user = new User(userData);
+    user.setPassword('password').then(() => {
+      user.save((error) => {
+        expect(error).not.toBe(null);
+        done();
+      });
+    });
+  });
+
+  it('accepts valid emails', (done) => {
+    userData.email = 'example@example.com';
+    const user = new User(userData);
+    user.setPassword('password').then(() => {
+      user.save((error) => {
+        expect(error).toBe(null);
         done();
       });
     });

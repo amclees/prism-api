@@ -28,6 +28,7 @@
     "dotenv": "^4.0.0",
     "grunt": "^1.0.1",
     "mongoose": "^4.12.1",
+    "validator": "^9.0.0",
     "winston": "^2.4.0"
   },
   "devDependencies": {

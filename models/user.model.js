@@ -7,6 +7,7 @@ winston.level = process.env.LOG_LEVEL;
 
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const validatorModule = require('validator');
 
 const settings = require('../config/settings.js');
 const validators = require('./validators.js');
@@ -50,6 +51,12 @@ userSchema.path('username').validate(function(username) {
     return true;
   }
 }, 'Invalid characters in username');
+
+userSchema.path('email').validate({
+  validator: validatorModule.isEmail,
+  isAsync: false,
+  message: 'Email must be a valid email'
+});
 
 userSchema.methods = {
   setPassword: function(passwordPlaintext) {
