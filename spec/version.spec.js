@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 mongoose.Promise = Promise;
 mongoose.connect(process.env.DB_HOST, {useMongoClient: true});
 
-//const Version = require('../models/version.model');
+const Version = require('../models/version.model');
 const User = require('../models/user.model');
 
 describe('The version model', () => {
@@ -24,9 +24,6 @@ describe('The version model', () => {
     root: false
   });
   let versionData;
-
-  // TODO: Write fixture to disk if it does not exist
-  beforeAll(() => {});
 
   beforeEach((done) => {
     versionData = {
@@ -61,7 +58,13 @@ describe('The version model', () => {
     });
   });
 
-  it('stores the date when it was created', () => {});
+  it('stores the date when it was created', (done) => {
+    const version = new Version(versionData);
 
-  it('salts and hashes its file', () => {});
+    version.save((error) => {
+      expect(error).toBe(null);
+      expect(version.dateUploaded).not.toBe(null);
+      done();
+    });
+  });
 });
