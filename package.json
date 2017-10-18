@@ -24,12 +24,8 @@
   "homepage": "https://github.com/amclees/prs-api#readme",
   "private": true,
   "dependencies": {
-    "bcrypt": "^1.0.3",
-    "dotenv": "^4.0.0",
     "grunt": "^1.0.1",
-    "mongoose": "^4.12.1",
-    "validator": "^9.0.0",
-    "winston": "^2.4.0"
+    "mongoose": "^4.12.1"
   },
   "devDependencies": {
     "jasmine": "^2.8.0"

@@ -2,8 +2,7 @@
   "env": {
     "jasmine": true,
     "node": true,
-    "builtin": true,
-    "es6": true
+    "builtin": true
   },
   "parserOptions": {
     "ecmaVersion": 7,
