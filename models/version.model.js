@@ -23,10 +23,6 @@ const versionSchema = new mongoose.Schema({
   uploader: {
     type: mongoose.Schema.Types.ObjectId,
     required: true
-  },
-  comments: {
-    type: [mongoose.Schema.Types.ObjectId],
-    default: []
   }
 });
 
