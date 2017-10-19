@@ -9,8 +9,8 @@ const mongoose = require('mongoose');
 mongoose.Promise = Promise;
 mongoose.connect(process.env.DB_HOST, {useMongoClient: true});
 
-const settings = require('../config/settings');
-const Program = require('../models/program.model');
+const settings = require('../lib/config/settings');
+const Program = require('../lib/models/program.model');
 
 describe('The program model', () => {
   beforeEach((done) => {
