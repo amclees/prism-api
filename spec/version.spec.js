@@ -9,8 +9,8 @@ const mongoose = require('mongoose');
 mongoose.Promise = Promise;
 mongoose.connect(process.env.DB_HOST, {useMongoClient: true});
 
-const Version = require('../lib/models/version.model');
-const User = require('../lib/models/user.model');
+const Version = require('../models/version.model');
+const User = require('../models/user.model');
 
 describe('The version model', () => {
   const user = new User({

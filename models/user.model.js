@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const validatorModule = require('validator');
 
-const settings = require('../config/settings');
+const settings = require('../lib/config/settings');
 const validators = require('./validators');
 
 const userSchema = new mongoose.Schema({

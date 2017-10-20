@@ -4,6 +4,7 @@
   "description": "CSULA PRS document review system REST API",
   "main": "index.js",
   "scripts": {
+    "start": "node ./bin/www",
     "test": "jasmine"
   },
   "repository": {
@@ -24,8 +25,16 @@
   "homepage": "https://github.com/amclees/prs-api#readme",
   "private": true,
   "dependencies": {
+    "body-parser": "~1.18.2",
+    "cookie-parser": "~1.4.3",
+    "express": "~4.15.5",
+    "serve-favicon": "~2.4.5",
+    "bcrypt": "^1.0.3",
+    "dotenv": "^4.0.0",
     "grunt": "^1.0.1",
-    "mongoose": "^4.12.1"
+    "mongoose": "^4.12.1",
+    "validator": "^9.0.0",
+    "winston": "^2.4.0"
   },
   "devDependencies": {
     "jasmine": "^2.8.0"

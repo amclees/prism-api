@@ -10,7 +10,7 @@ mongoose.Promise = Promise;
 mongoose.connect(process.env.DB_HOST, {useMongoClient: true});
 
 const settings = require('../lib/config/settings');
-const Program = require('../lib/models/program.model');
+const Program = require('../models/program.model');
 
 describe('The program model', () => {
   beforeEach((done) => {

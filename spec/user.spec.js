@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 mongoose.Promise = Promise;
 mongoose.connect(process.env.DB_HOST, {useMongoClient: true});
 
-const User = require('../lib/models/user.model');
+const User = require('../models/user.model');
 
 describe('The user model', () => {
   let userData;

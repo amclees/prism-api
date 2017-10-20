@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const mongoose = require('mongoose');
 
-const settings = require('../config/settings');
+const settings = require('../lib/config/settings');
 const validators = require('./validators');
 
 const programSchema = new mongoose.Schema({
