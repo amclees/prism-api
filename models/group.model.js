@@ -10,8 +10,8 @@ const groupSchema = new mongoose.Schema({
     required: true
   },
   members: {
-    type: String,
-    required: true
+    type: [mongoose.Schema.Types.ObjectId],
+    default: []
   }
 });
 

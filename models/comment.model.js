@@ -13,7 +13,7 @@ const commentSchema = new mongoose.Schema({
     required: true
   },
   author: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     required: true
   },
   creationDate: {
@@ -21,7 +21,8 @@ const commentSchema = new mongoose.Schema({
     required: true
   },
   version: {
-    type: mongoose.Schema.Types.ObjectId
+    type: mongoose.Schema.Types.ObjectId,
+    required: true
   }
 });
 
