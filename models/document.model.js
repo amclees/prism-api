@@ -12,14 +12,6 @@ const documentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  program: {
-    type: String,
-    required: true
-  },
-  leadUser: {
-    type: String,
-    required: true
-  },
   currentVersion: {
     type: String,
     required: true
@@ -28,10 +20,6 @@ const documentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  expectedCompletion: {
-    type: String,
-    required: true
-  }
 });
 
 module.exports = mongoose.model('Document', documentSchema);
