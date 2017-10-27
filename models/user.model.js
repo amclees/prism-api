@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  cas: {},
+  samlType: String,
   passwordHash: String
 });
 
