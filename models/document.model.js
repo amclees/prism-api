@@ -13,12 +13,12 @@ const documentSchema = new mongoose.Schema({
     required: true
   },
   currentVersion: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     required: true
   },
   allVersions: {
-    type: String,
-    required: true
+    type: [mongoose.Schema.Types.ObjectId],
+    default: []
   },
 });
 
