@@ -9,13 +9,13 @@ const mongoose = require('mongoose');
 const Document = require('./document.model');
 
 const reviewDocumentSchema = new mongoose.Schema({
-  review: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true
+  finalized: {
+    type: Boolean,
+    default: false
   },
-  leadUser: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true
+  prerequisites: {
+    type: [mongoose.Schema.Types.ObjectId],
+    default: []
   },
   expectedCompletion: {
     type: Date,
