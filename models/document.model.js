@@ -12,12 +12,28 @@ const documentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  currentVersion: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true
+  currentRevision: {
+    type: Number
   },
-  allVersions: {
-    type: [mongoose.Schema.Types.ObjectId],
+  allRevisions: {
+    type: [{
+      message: {
+        type: String,
+        required: true
+      },
+      filePath: {
+        type: String,
+        required: true
+      },
+      dateUploaded: {
+        type: Date,
+        default: Date.now
+      },
+      uploader: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true
+      }
+    }],
     default: []
   },
 });
