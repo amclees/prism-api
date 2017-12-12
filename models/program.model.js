@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const mongoose = require('mongoose');
 
 const settings = require('../lib/config/settings');

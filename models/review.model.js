@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const mongoose = require('mongoose');
 
 const reviewSchema = new mongoose.Schema({

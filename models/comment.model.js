@@ -1,10 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
-const winston = require('winston');
-winston.level = process.env.LOG_LEVEL;
-
 const mongoose = require('mongoose');
 
 const commentSchema = new mongoose.Schema({
