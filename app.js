@@ -1,16 +1,20 @@
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 //const favicon = require('serve-favicon');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
-const endpoints = [
-  require('./routes/test_endpoint'),
-  require('./routes/create_review')
-];
+const mongoose = require('mongoose');
+mongoose.Promise = Promise;
+mongoose.connect(process.env.DB_HOST, {useMongoClient: true});
 
 const app = express();
 app.disable('x-powered-by');
+
+const models = require('./models');
+const routes = require('./routes');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -19,8 +23,8 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-for (let endpoint of endpoints) {
-  app.use('/', endpoint);
+for (let route of routes) {
+  app.use(route);
 }
 
 // catch 404 and forward to error handler
