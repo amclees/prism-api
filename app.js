@@ -4,12 +4,10 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
-const endpoints = [
-  require('./routes/test_endpoint'),
-  require('./routes/group.route')
-];
-
 const app = express();
+
+const routes = require('./routes');
+const models = require('./models');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -18,8 +16,8 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-for (let endpoint of endpoints) {
-  app.use(endpoint);
+for (let route of routes) {
+  app.use(route);
 }
 
 // catch 404 and forward to error handler
