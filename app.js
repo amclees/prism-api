@@ -1,13 +1,19 @@
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 //const favicon = require('serve-favicon');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
+const mongoose = require('mongoose');
+mongoose.Promise = Promise;
+mongoose.connect(process.env.DB_HOST, {useMongoClient: true});
+
 const app = express();
 
-const routes = require('./routes');
 const models = require('./models');
+const routes = require('./routes');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
