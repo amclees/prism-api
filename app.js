@@ -10,6 +10,7 @@ const endpoints = [
 ];
 
 const app = express();
+app.disable('x-powered-by');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
