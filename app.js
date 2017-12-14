@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 
 const endpoints = [
   require('./routes/test_endpoint'),
-  require('./routes/create_review')
+  require('./routes/group.route')
 ];
 
 const app = express();
@@ -19,7 +19,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 for (let endpoint of endpoints) {
-  app.use('/', endpoint);
+  app.use(endpoint);
 }
 
 // catch 404 and forward to error handler

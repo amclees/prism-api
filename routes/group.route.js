@@ -1,0 +1,8 @@
+const express = require('express');
+const router = express.Router();
+
+router.route('/group').get(function(req, res) {
+  res.send('Success');
+});
+
+module.exports = router;
