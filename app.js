@@ -5,6 +5,7 @@ const path = require('path');
 //const favicon = require('serve-favicon');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
+const morgan = require('morgan')
 
 const mongoose = require('mongoose');
 mongoose.Promise = Promise;
@@ -18,6 +19,7 @@ const routes = require('./routes');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(morgan(process.env.MORGAN_MODE ? process.env.MORGAN_MODE : 'combined'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
