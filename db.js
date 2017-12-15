@@ -30,7 +30,7 @@ mongoose.connection.on('disconnected', () => {
 });
 
 module.exports.disconnect = (msg, callback) => {
-  mongoose.connection.close.then(() => {
+  mongoose.connection.close().then(() => {
     winston.info(`Mongoose disconnected: ${msg}`);
     callback();
   }, (err) => {
