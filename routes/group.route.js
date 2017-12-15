@@ -4,110 +4,87 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Group = mongoose.model('Group');
 
-router.param('group_id', function(req, res, next, groupId) {
-  req.groupId = groupId;
-  try {
-    Group.findOne({_id: mongoose.Types.ObjectId(groupId)}).then((group) => {
-      req.group = group;
-      next();
-    }, () => {
-      next();
-    });
-  } catch (err) {
-    // Invalid object id
-    next();
-  }
-});
-
-router.param('member_id', function(req, res, next, memberId) {
-  req.memberId = memberId;
-  next();
-});
-
 router.route('/group/:group_id?')
-    .get(function(req, res) {
-      if (req.group) {
-        res.json(req.group);
-      } else {
-        res.sendStatus(404);
-      }
-    })
-    .put(function(req, res) {
-      if (req.group) {
-        Group.findOneAndUpdate({_id: req.groupId}, {$set: {name: req.body.name}}, {new: true, runValidators: true}).then(function(updatedGroup) {
-          res.json(updatedGroup);
-        }, function(err) {
-          res.sendStatus(400);
-        });
-      } else {
-        res.sendStatus(404);
-      }
-    })
-    .post(function(req, res) {
-      if (req.group) {
-        res.sendStatus(400);
-      } else {
-        Group.create(req.body).then(function(newGroup) {
-          res.status(201);
-          res.json(newGroup);
-        }, function() {
-          res.sendStatus(400);
-        });
-      }
-    })
-    .delete(function(req, res, next) {
-      if (req.group) {
-        Group.remove({_id: req.groupId}).then(function() {
-          res.sendStatus(200);
-        }, function() {
-          next(new Error('Error deleting group'));
-        });
-      } else {
-        res.sendStatus(400);
-      }
-    });
-
-router.route('/group/:group_id/member/:member_id')
-    .all(function(req, res, next) {
-      if (req.group) {
-        next();
-      } else {
-        res.sendStatus(400);
-      }
+    .get(function(req, res, next) {
+      Group.findById(req.params.group_id).then(function(group) {
+        res.json(group);
+      }, function(err) {
+        err.status = 404;
+        next(err);
+      });
     })
     .put(function(req, res, next) {
-      if (req.group.members.indexOf(req.memberId) === -1) {
-        Group.findOneAndUpdate({_id: req.groupId}, {$push: {members: req.memberId}}, {new: true, runValidators: true}).then(function(updatedGroup) {
+      Group.findByIdAndUpdate(req.params.group_id, {$set: {name: req.body.name}}, {new: true, runValidators: true}).then(function(updatedGroup) {
+        res.json(updatedGroup);
+      }, function(err) {
+        next(err);
+      });
+    })
+    .delete(function(req, res, next) {
+      Group.remove({_id: req.params.group_id}).then(function() {
+        res.sendStatus(204);
+      }, function(err) {
+        next(err);
+      });
+    });
+
+router.route('/group').post(function(req, res, next) {
+  Group.create(req.body).then(function(newGroup) {
+    res.status(201);
+    res.json(newGroup);
+  }, function(err) {
+    next(err);
+  });
+});
+
+router.route('/group/:group_id/member/:member_id')
+    .put(function(req, res, next) {
+      Group.findById(req.params.group_id).then(function(group) {
+        if (group.members.indexOf(req.params.member_id) !== -1) {
+          res.sendStatus(400);
+          return;
+        }
+
+        try {
+          group.members.push(req.params.member_id);
+        } catch (err) {
+          res.sendStatus(400);
+          return;
+        }
+
+        group.save().then(function(updatedGroup) {
           res.json(updatedGroup);
         }, function(err) {
           next(err);
         });
-      } else {
-        res.sendStatus(304);
-      }
+      }, function(err) {
+        err.status = 404;
+        next(err);
+      });
     })
     .delete(function(req, res, next) {
-      if (req.group.members.indexOf(req.memberId) === -1) {
-        res.sendStatus(404);
-      } else {
-        const location = req.group.members.indexOf(req.memberId);
+      Group.findById(req.params.group_id).then(function(group) {
+        const location = group.members.indexOf(req.params.member_id);
         if (location === -1) {
           res.sendStatus(404);
-        } else {
-          const removed = req.group.members.splice(location, 1)[0];
-          req.group.save().then(function() {
-            res.json(removed);
-          }, function(err) {
-            next(err);
-          });
+          return;
         }
-      }
+        const removed = group.members.splice(location, 1)[0];
+        group.save().then(function() {
+          res.json(removed);
+        }, function(err) {
+          next(err);
+        });
+      }, function(err) {
+        err.status = 404;
+        next(err);
+      });
     });
 
 router.get('/groups', function(req, res, next) {
-  Group.find().exec().then((groups) => {
+  Group.find().exec().then(function(groups) {
     res.json(groups);
-  }, (err) => {
+  }, function(err) {
     next(err);
   });
 });
