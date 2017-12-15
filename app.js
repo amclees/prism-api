@@ -1,20 +1,19 @@
 require('dotenv').config();
 
+const winston = require('winston');
+winston.level = process.env.LOG_LEVEL;
+
 const express = require('express');
 const path = require('path');
 //const favicon = require('serve-favicon');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-const morgan = require('morgan')
-
-const mongoose = require('mongoose');
-mongoose.Promise = Promise;
-mongoose.connect(process.env.DB_HOST, {useMongoClient: true});
+const morgan = require('morgan');
 
 const app = express();
 app.disable('x-powered-by');
 
-const models = require('./models');
+const db = require('./db');
 const routes = require('./routes');
 
 // uncomment after placing your favicon in /public
@@ -46,5 +45,8 @@ app.use(function(err, req, res) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+// Teardown can be passed any modules necessary for proper teardown
+require('./teardown')(db.disconnect);
 
 module.exports = app;
