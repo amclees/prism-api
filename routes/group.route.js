@@ -4,7 +4,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Group = mongoose.model('Group');
 
-router.route('/group/:group_id?')
+router.route('/group/:group_id')
     .get(function(req, res, next) {
       Group.findById(req.params.group_id).then(function(group) {
         res.json(group);
@@ -21,8 +21,12 @@ router.route('/group/:group_id?')
       });
     })
     .delete(function(req, res, next) {
-      Group.remove({_id: req.params.group_id}).then(function() {
-        res.sendStatus(204);
+      Group.findByIdAndRemove(req.params.group_id).then(function(removedDocument) {
+        if (removedDocument) {
+          res.sendStatus(204);
+        } else {
+          res.sendStatus(404);
+        }
       }, function(err) {
         next(err);
       });
