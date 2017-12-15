@@ -104,4 +104,12 @@ router.route('/group/:group_id/member/:member_id')
       }
     });
 
+router.get('/groups', function(req, res, next) {
+  Group.find().exec().then((groups) => {
+    res.json(groups);
+  }, (err) => {
+    next(err);
+  });
+});
+
 module.exports = router;
