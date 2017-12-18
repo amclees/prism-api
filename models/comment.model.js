@@ -3,7 +3,6 @@
 require('dotenv').config();
 
 const winston = require('winston');
-winston.level = process.env.LOG_LEVEL;
 
 const mongoose = require('mongoose');
 
