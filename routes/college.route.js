@@ -14,8 +14,8 @@ router.route('/college/:college_id')
         next(err);
       });
     })
-    .put(function(req, res, next) {
-      College.findByIdAndUpdate(req.params.college_id, {$set: {name: req.body.name, dean: req.body.dean}}, {new: true, runValidators: true}).then(function(updatedCollege) {
+    .patch(function(req, res, next) {
+      College.findByIdAndUpdate(req.params.college_id, {$set: req.body}, {new: true, runValidators: true}).then(function(updatedCollege) {
         res.json(updatedCollege);
         winston.info(`Updated college with id ${req.params.college_id}`);
       }, function(err) {
