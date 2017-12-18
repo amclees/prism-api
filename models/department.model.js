@@ -13,10 +13,7 @@ const departmentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: true
   },
-  chair: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true
-  }
+  chair: mongoose.Schema.Types.ObjectId
 });
 
 module.exports = mongoose.model('Department', departmentSchema);

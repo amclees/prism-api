@@ -9,10 +9,7 @@ const collegeSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  dean: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true
-  }
+  dean: mongoose.Schema.Types.ObjectId
 });
 
 module.exports = mongoose.model('College', collegeSchema);

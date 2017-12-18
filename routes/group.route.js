@@ -14,8 +14,8 @@ router.route('/group/:group_id')
         next(err);
       });
     })
-    .put(function(req, res, next) {
-      Group.findByIdAndUpdate(req.params.group_id, {$set: {name: req.body.name}}, {new: true, runValidators: true}).then(function(updatedGroup) {
+    .patch(function(req, res, next) {
+      Group.findByIdAndUpdate(req.params.group_id, {$set: req.body}, {new: true, runValidators: true}).then(function(updatedGroup) {
         res.json(updatedGroup);
         winston.info(`Updated group with id ${req.params.group_id}`);
       }, function(err) {
