@@ -9,6 +9,10 @@ const collegeSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  abbreviation: {
+    type: String,
+    required: true
+  },
   dean: mongoose.Schema.Types.ObjectId
 });
 

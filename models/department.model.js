@@ -9,6 +9,10 @@ const departmentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  abbreviation: {
+    type: String,
+    required: true
+  },
   college: {
     type: mongoose.Schema.Types.ObjectId,
     required: true
