@@ -7,7 +7,7 @@ const Department = mongoose.model('Department');
 
 router.route('/department/:department_id')
     .get(function(req, res, next) {
-      Department.findById(req.params.department_id).then(function(department) {
+      Department.findById(req.params.department_id).populate('chairs').then(function(department) {
         res.json(department);
       }, function(err) {
         err.status = 404;
@@ -48,7 +48,7 @@ router.route('/department').post(function(req, res, next) {
 });
 
 router.get('/departments', function(req, res, next) {
-  Department.find().exec().then(function(departments) {
+  Department.find().populate('chairs').exec().then(function(departments) {
     res.json(departments);
   }, function(err) {
     next(err);

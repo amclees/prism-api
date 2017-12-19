@@ -7,7 +7,7 @@ const College = mongoose.model('College');
 
 router.route('/college/:college_id')
     .get(function(req, res, next) {
-      College.findById(req.params.college_id).then(function(college) {
+      College.findById(req.params.college_id).populate('deans').then(function(college) {
         res.json(college);
       }, function(err) {
         err.status = 404;
@@ -48,7 +48,7 @@ router.route('/college').post(function(req, res, next) {
 });
 
 router.get('/colleges', function(req, res, next) {
-  College.find().exec().then(function(colleges) {
+  College.find().populate('deans').exec().then(function(colleges) {
     res.json(colleges);
   }, function(err) {
     next(err);

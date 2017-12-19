@@ -17,7 +17,10 @@ const departmentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: true
   },
-  chair: mongoose.Schema.Types.ObjectId
+  chairs: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }]
 });
 
 module.exports = mongoose.model('Department', departmentSchema);
