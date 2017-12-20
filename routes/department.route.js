@@ -4,6 +4,7 @@ const router = express.Router();
 
 const mongoose = require('mongoose');
 const Department = mongoose.model('Department');
+const Program = mongoose.model('Program');
 
 router.route('/department/:department_id')
     .get(function(req, res, next) {
@@ -46,6 +47,15 @@ router.route('/department').post(function(req, res, next) {
     winston.info('Failed to create department with body:', req.body);
   });
 });
+
+router.route('/department/:department_id/programs')
+    .get(function(req, res, next) {
+      Program.find({department: req.params.department_id}).then(function(programs) {
+        res.json(programs);
+      }, function(err) {
+        next(err);
+      });
+    });
 
 router.get('/departments', function(req, res, next) {
   Department.find().populate('chairs').exec().then(function(departments) {

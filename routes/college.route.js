@@ -4,6 +4,7 @@ const router = express.Router();
 
 const mongoose = require('mongoose');
 const College = mongoose.model('College');
+const Department = mongoose.model('Department');
 
 router.route('/college/:college_id')
     .get(function(req, res, next) {
@@ -46,6 +47,15 @@ router.route('/college').post(function(req, res, next) {
     winston.info('Failed to create college with body:', req.body);
   });
 });
+
+router.route('/college/:college_id/departments')
+    .get(function(req, res, next) {
+      Department.find({college: req.params.college_id}).populate('chairs').then(function(departments) {
+        res.json(departments);
+      }, function(err) {
+        next(err);
+      });
+    });
 
 router.get('/colleges', function(req, res, next) {
   College.find().populate('deans').exec().then(function(colleges) {
