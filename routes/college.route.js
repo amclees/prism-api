@@ -24,13 +24,22 @@ router.route('/college/:college_id')
       });
     })
     .delete(function(req, res, next) {
-      College.findByIdAndRemove(req.params.college_id).then(function(removedDocument) {
-        if (removedDocument) {
-          res.sendStatus(204);
-          winston.info(`Removed college with id ${req.params.college_id}`);
+      Department.find({college: req.params.college_id}).then(function(dependents) {
+        if (dependents.length === 0) {
+          College.findByIdAndRemove(req.params.college_id).then(function(removedDocument) {
+            if (removedDocument) {
+              res.sendStatus(204);
+              winston.info(`Removed college with id ${req.params.college_id}`);
+            } else {
+              res.sendStatus(404);
+              winston.info(`Tried to remove nonexistent college with id ${req.params.college_id}`);
+            }
+          }, function(err) {
+            next(err);
+          });
         } else {
-          res.sendStatus(404);
-          winston.info(`Tried to remove nonexistent college with id ${req.params.college_id}`);
+          res.sendStatus(400);
+          winston.info(`Tried to remove college with id ${req.params.college_id} but it had dependents`);
         }
       }, function(err) {
         next(err);

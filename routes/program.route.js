@@ -4,6 +4,7 @@ const router = express.Router();
 
 const mongoose = require('mongoose');
 const Program = mongoose.model('Program');
+const Review = mongoose.model('Review');
 
 router.route('/program/:program_id')
     .get(function(req, res, next) {
@@ -23,16 +24,23 @@ router.route('/program/:program_id')
       });
     })
     .delete(function(req, res, next) {
-      Program.findByIdAndRemove(req.params.program_id).then(function(removedDocument) {
-        if (removedDocument) {
-          res.sendStatus(204);
-          winston.info(`Removed program with id ${req.params.program_id}`);
+      Review.find({program: req.params.program_id}).then(function(dependents) {
+        if (dependents.length === 0) {
+          Program.findByIdAndRemove(req.params.program_id).then(function(removedDocument) {
+            if (removedDocument) {
+              res.sendStatus(204);
+              winston.info(`Removed program with id ${req.params.program_id}`);
+            } else {
+              res.sendStatus(404);
+              winston.info(`Tried to remove nonexistent program with id ${req.params.program_id}`);
+            }
+          }, function(err) {
+            next(err);
+          });
         } else {
-          res.sendStatus(404);
-          winston.info(`Tried to remove nonexistent program with id ${req.params.program_id}`);
+          res.sendStatus(400);
+          winston.info(`Tried to remove program with id ${req.params.program_id} but it had dependents`);
         }
-      }, function(err) {
-        next(err);
       });
     });
 
