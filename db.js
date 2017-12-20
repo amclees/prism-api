@@ -1,8 +1,10 @@
 const winston = require('winston');
 const mongoose = require('mongoose');
 
-require('./models');
 
+
+require('./models');
+const User = mongoose.model('User');
 if (!process.env.DB_HOST) {
   winston.warn('DB_HOST not specified in environment. Is the .env file properly set up?');
 }
@@ -13,6 +15,19 @@ mongoose.connect(process.env.DB_HOST, {
         })
     .then(() => {
       winston.info(`Mongoose initial connection to ${process.env.DB_HOST} successful`);
+      const user = new User({
+        username: 'username',
+        email: 'email@example.com',
+        name: {
+          first: 'first name',
+          last: 'last name'
+        },
+        internal: true,
+        root: false
+      });
+      user.setPassword('password').then(() => {
+          user.save((err) => {});
+  });
     }, () => {
       winston.error('Mongoose initial connection error');
     });
