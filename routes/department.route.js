@@ -4,10 +4,11 @@ const router = express.Router();
 
 const mongoose = require('mongoose');
 const Department = mongoose.model('Department');
+const Program = mongoose.model('Program');
 
 router.route('/department/:department_id')
     .get(function(req, res, next) {
-      Department.findById(req.params.department_id).then(function(department) {
+      Department.findById(req.params.department_id).populate('chairs').then(function(department) {
         res.json(department);
       }, function(err) {
         err.status = 404;
@@ -23,16 +24,23 @@ router.route('/department/:department_id')
       });
     })
     .delete(function(req, res, next) {
-      Department.findByIdAndRemove(req.params.department_id).then(function(removedDocument) {
-        if (removedDocument) {
-          res.sendStatus(204);
-          winston.info(`Removed department with id ${req.params.department_id}`);
+      Program.find({department: req.params.department_id}).then(function(dependents) {
+        if (dependents.length === 0) {
+          Department.findByIdAndRemove(req.params.department_id).then(function(removedDocument) {
+            if (removedDocument) {
+              res.sendStatus(204);
+              winston.info(`Removed department with id ${req.params.department_id}`);
+            } else {
+              res.sendStatus(404);
+              winston.info(`Tried to remove nonexistent department with id ${req.params.department_id}`);
+            }
+          }, function(err) {
+            next(err);
+          });
         } else {
-          res.sendStatus(404);
-          winston.info(`Tried to remove nonexistent department with id ${req.params.department_id}`);
+          res.sendStatus(400);
+          winston.info(`Tried to remove department with id ${req.params.department_id} but it had dependents`);
         }
-      }, function(err) {
-        next(err);
       });
     });
 
@@ -47,8 +55,17 @@ router.route('/department').post(function(req, res, next) {
   });
 });
 
+router.route('/department/:department_id/programs')
+    .get(function(req, res, next) {
+      Program.find({department: req.params.department_id}).then(function(programs) {
+        res.json(programs);
+      }, function(err) {
+        next(err);
+      });
+    });
+
 router.get('/departments', function(req, res, next) {
-  Department.find().exec().then(function(departments) {
+  Department.find().populate('chairs').exec().then(function(departments) {
     res.json(departments);
   }, function(err) {
     next(err);

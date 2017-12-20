@@ -4,10 +4,11 @@ const router = express.Router();
 
 const mongoose = require('mongoose');
 const College = mongoose.model('College');
+const Department = mongoose.model('Department');
 
 router.route('/college/:college_id')
     .get(function(req, res, next) {
-      College.findById(req.params.college_id).then(function(college) {
+      College.findById(req.params.college_id).populate('deans').then(function(college) {
         res.json(college);
       }, function(err) {
         err.status = 404;
@@ -23,13 +24,22 @@ router.route('/college/:college_id')
       });
     })
     .delete(function(req, res, next) {
-      College.findByIdAndRemove(req.params.college_id).then(function(removedDocument) {
-        if (removedDocument) {
-          res.sendStatus(204);
-          winston.info(`Removed college with id ${req.params.college_id}`);
+      Department.find({college: req.params.college_id}).then(function(dependents) {
+        if (dependents.length === 0) {
+          College.findByIdAndRemove(req.params.college_id).then(function(removedDocument) {
+            if (removedDocument) {
+              res.sendStatus(204);
+              winston.info(`Removed college with id ${req.params.college_id}`);
+            } else {
+              res.sendStatus(404);
+              winston.info(`Tried to remove nonexistent college with id ${req.params.college_id}`);
+            }
+          }, function(err) {
+            next(err);
+          });
         } else {
-          res.sendStatus(404);
-          winston.info(`Tried to remove nonexistent college with id ${req.params.college_id}`);
+          res.sendStatus(400);
+          winston.info(`Tried to remove college with id ${req.params.college_id} but it had dependents`);
         }
       }, function(err) {
         next(err);
@@ -47,8 +57,17 @@ router.route('/college').post(function(req, res, next) {
   });
 });
 
+router.route('/college/:college_id/departments')
+    .get(function(req, res, next) {
+      Department.find({college: req.params.college_id}).populate('chairs').then(function(departments) {
+        res.json(departments);
+      }, function(err) {
+        next(err);
+      });
+    });
+
 router.get('/colleges', function(req, res, next) {
-  College.find().exec().then(function(colleges) {
+  College.find().populate('deans').exec().then(function(colleges) {
     res.json(colleges);
   }, function(err) {
     next(err);
