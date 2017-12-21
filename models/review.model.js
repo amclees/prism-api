@@ -11,11 +11,7 @@ const reviewSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  finishDate: Date,
-  documents: {
-    type: [mongoose.Schema.Types.ObjectId],
-    default: []
-  }
+  stage: mongoose.Schema.Types.ObjectId
 });
 
 reviewSchema.methods.documentObjects = function() {

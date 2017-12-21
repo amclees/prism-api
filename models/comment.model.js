@@ -1,9 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
-const winston = require('winston');
-
 const mongoose = require('mongoose');
 
 const commentSchema = new mongoose.Schema({
