@@ -15,7 +15,7 @@ describe('The user model', () => {
   let userData;
   const resetUser = () => {
     userData = {
-      username: 'username',
+      username: 'userSpecTestUser',
       email: 'email@example.com',
       name: {
         first: 'first name',
@@ -32,7 +32,7 @@ describe('The user model', () => {
   });
 
   beforeEach((done) => {
-    User.remove({}, function(error) {
+    User.remove({username: 'userSpecTestUser'}, function(error) {
       if (error) {
         winston.log('error', `Error removing all documents from database between tests: ${error.message}`);
       }
