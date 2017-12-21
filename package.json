@@ -26,6 +26,7 @@
   "private": true,
   "dependencies": {
     "bcrypt": "^1.0.3",
+    "bcrypt-nodejs": "0.0.3",
     "body-parser": "~1.18.2",
     "cookie-parser": "~1.4.3",
     "dotenv": "^4.0.0",
@@ -35,6 +36,10 @@
     "mongoose": "^4.12.1",
     "morgan": "^1.9.0",
     "passport": "^0.4.0",
+<<<<<<< HEAD
+=======
+    "passport-jwt": "^3.0.1",
+>>>>>>> d83f65c5ca4f9243c03277a3e113444501e89be9
     "serve-favicon": "~2.4.5",
     "validator": "^9.0.0",
     "winston": "^2.4.0"
