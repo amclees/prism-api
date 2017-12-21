@@ -33,13 +33,11 @@
     "express": "~4.15.5",
     "grunt": "^1.0.1",
     "jsonwebtoken": "^8.1.0",
+    "lodash": "^4.17.4",
     "mongoose": "^4.12.1",
     "morgan": "^1.9.0",
     "passport": "^0.4.0",
-<<<<<<< HEAD
-=======
     "passport-jwt": "^3.0.1",
->>>>>>> d83f65c5ca4f9243c03277a3e113444501e89be9
     "serve-favicon": "~2.4.5",
     "validator": "^9.0.0",
     "winston": "^2.4.0"

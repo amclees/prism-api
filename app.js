@@ -9,10 +9,6 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const passport = require('passport');
-<<<<<<< HEAD
-=======
-
->>>>>>> d83f65c5ca4f9243c03277a3e113444501e89be9
 const app = express();
 app.disable('x-powered-by');
 
