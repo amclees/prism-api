@@ -3,11 +3,9 @@
 require('dotenv').config();
 
 const winston = require('winston');
-winston.level = process.env.LOG_LEVEL;
-
 const mongoose = require('mongoose');
+const _ = require('lodash');
 
-// For use in verification later on
 const nodeType = {
   startDate: Date,
   finishDate: Date,
@@ -33,8 +31,20 @@ const stageSchema = new mongoose.Schema({
   }
 });
 
+stageSchema.path('nodes').validate({
+  validator: nodeValidator,
+  isAsync: false,
+  message: 'Invalid nodes in Stage'
+});
+
 stageSchema.post('init', function() {
-  console.log('filled');
+  recalculateDates.bind(this)();
+});
+
+module.exports = mongoose.model('Stage', stageSchema);
+
+function recalculateDates() {
+  winston.debug('Calculating dates for Stage');
   let safety = 1000;
   const fillNodeDate = (nodeId) => {
     if (safety-- <= 0) {
@@ -72,12 +82,66 @@ stageSchema.post('init', function() {
   for (let endNode of this.endNodes) {
     fillNodeDate(endNode);
   }
-});
-
-module.exports = mongoose.model('Stage', stageSchema);
+}
 
 function offsetDate(date, days) {
   const dateToAdjust = new Date(date.getTime());
   dateToAdjust.setDate(dateToAdjust.getDate() + days);
   return dateToAdjust;
+}
+
+function nodeValidator(nodes) {
+  return _.size(_.keys(nodes)) <= 1000 && _.every(_.values(nodes), validNode);
+}
+
+function validNode(node) {
+  winston.info('validating node', node);
+  let valid = 'nan';
+  try {
+    valid = _.size(_.keys(node)) <= _.size(_.keys(nodeType)) && _.every(_.keys(node), function(key) {
+      return _.has(nodeType, key) && validValue(key, node[key]);
+    });
+  } catch (err) {
+    winston.error(err);
+  }
+  winston.info('the node is valid:', valid);
+  return valid;
+}
+
+const nodeValidators = {
+  'startDate': _.isDate,
+  'finishDate': _.isDate,
+  'completionEstimate': _.isNumber,
+  'finishDateOverriden': _.isBoolean,
+  'finalized': _.isBoolean,
+  'email': validEmailSettings,
+  'document': validObjectId,
+  'prerequisites': validPrerequisites
+};
+
+function validValue(key, value) {
+  return nodeValidators[key](value);
+}
+
+function validEmailSettings(value) {
+  try {
+    return _.every(_.toPairs(value), function(pair) {
+      _.every(pair, _.isString);
+    });
+  } catch (err) {
+    return false;
+  }
+}
+
+function validPrerequisites(value) {
+  return _.isArray(value) && _.every(value, validObjectId);
+}
+
+function validObjectId(value) {
+  try {
+    mongoose.Types.ObjectId(value);
+    return true;
+  } catch (err) {
+    return false;
+  }
 }
