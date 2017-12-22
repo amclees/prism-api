@@ -1,5 +1,7 @@
 'use strict';
 
+const _ = require('lodash');
+
 const winston = require('winston');
 
 const mongoose = require('mongoose');
@@ -29,6 +31,11 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  enabled: { // Flag for 'deleted' account users
+    type: Boolean,
+    required: true,
+    default: true
+  }
   samlType: String,
   passwordHash: String
 });
@@ -68,6 +75,9 @@ userSchema.methods = {
   },
   comparePassword: function(passwordPlaintext) {
     return bcrypt.compare(passwordPlaintext, this.passwordHash);
+  },
+  excludeFields = function(fields = ['passwordHash']) {
+    return _.omit(this.toObject(), fields);
   }
 };
 

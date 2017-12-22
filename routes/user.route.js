@@ -10,7 +10,7 @@ router.param('user_id', function(req, res, next, id) {
   req.id = id;
   try {
     User.findOne({_id: mongoose.Types.ObjectId(id)}).then((user) => {
-      req.user = user;
+      req.user = user.excludeFields();
       next();
     }, () => {
       next();
@@ -28,7 +28,8 @@ router.route('/user/:user_id?')
   })
   .get(function(req, res, next) {
     if (req.user) {
-      res.json(req.user));
+      // Excludes passwordHash field
+      res.json(_.omit(req.user, 'passwordHash'));
     } else {
       res.sendStatus(404);
     }
@@ -39,9 +40,9 @@ router.route('/user/:user_id?')
       res.sendStatus(403);
       next();
     }
+    // {username: req.body.username, email: req.body.email, name: req.body.name}}
     const update = _.pick(req.body, ['username', 'email', 'name']);
-    User.findOneAndUpdate({_id: req.id}, {$set: {username: req.body.username,
-      email: req.body.email, name: req.body.name}}, {new: true,
+    User.findOneAndUpdate({_id: req.id}, {$set: update, {new: true,
         runValidators: true}).then(function(updatedUser) {
       res.json(updatedUser);
     }, function(err) {
@@ -52,19 +53,31 @@ router.route('/user/:user_id?')
     if(req.user) {
       res.sendStatus(400);
     } else {
-      User.create(req.body).then(function(newUser) {
-        res.json(newUser);
+      const newUser = _.omit(req.body, 'password');
+      User.create(newUser).then(function(createdUser) {
+        if(createdUser.setPassword(req.body.password)){
+          res.sendStatus(201);
+        } else {
+          User.remove(createdUser).then(function(){
+            res.sendStatus(400);
+          }, function() {
+            next(new Error('Error deleting user'));
+          });
+          res.sendStatus(400);
+        }
       }, function() {
         res.sendStatus(400);
       });
     }
   })
+  // Deletion will disable users not delete them
   .delete(function(req, res, next) {
     if (req.user) {
-      User.remove({_id: req.id}).then(function(){
-        res.sendStatus(204);
+      User.findOneAndUpdate({_id: req.id}, {$set: {enabled: false}, {new: true,
+        runValidators:true}).then(function(disabledUser){
+          res.sendStatus(204);
       }, function() {
-        next(new Error('Error deleting user'));
+        next(new Error('Error disabling user'));
       });
     } else {
       res.sendStatus(404);
