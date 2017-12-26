@@ -2,23 +2,32 @@
 
 const mongoose = require('mongoose');
 
+const notDeleted = function() {
+  return !this.deleted;
+};
+
 const documentSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true
   },
   currentRevision: {
-    type: Number
+    type: Number,
+    validate: {
+      validator: function(value) {
+        return value === undefined || (value > 0 && value < this.allRevisions.length);
+      }
+    }
   },
-  allRevisions: {
+  revisions: {
     type: [{
       message: {
         type: String,
-        required: true
+        required: notDeleted
       },
       filePath: {
         type: String,
-        required: true
+        required: notDeleted
       },
       dateUploaded: {
         type: Date,
@@ -26,11 +35,19 @@ const documentSchema = new mongoose.Schema({
       },
       uploader: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true
-      }
+        required: notDeleted
+      },
+      deleted: Boolean
     }],
     default: []
   },
+  comments: {
+    type: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Comment'
+    }],
+    default: []
+  }
 });
 
 module.exports = mongoose.model('Document', documentSchema);
