@@ -1,4 +1,5 @@
 module.exports = [
   require('./group.route'),
-  require('./test_endpoint')
+  require('./test_endpoint'),
+  require('./user.route')
 ];
