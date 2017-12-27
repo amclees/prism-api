@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     required: true,
     default: true
-  }
+  },
   samlType: String,
   passwordHash: String
 });
@@ -76,7 +76,7 @@ userSchema.methods = {
   comparePassword: function(passwordPlaintext) {
     return bcrypt.compare(passwordPlaintext, this.passwordHash);
   },
-  excludeFields = function(fields = ['passwordHash']) {
+  excludeFields: function(fields = ['passwordHash']) {
     return _.omit(this.toObject(), fields);
   }
 };

@@ -6,6 +6,9 @@ const User = mongoose.model('User');
 
 const _ = require('lodash');
 
+const winston = require ('winston');
+winston.level = process.env.LOG_LEVEL || 'info';
+
 router.param('user_id', function(req, res, next, id) {
   req.id = id;
   try {
@@ -38,7 +41,6 @@ router.route('/user/:user_id?')
   .put(function(req, res, next) {
     if(req.user.username != req.params.username) {
       res.sendStatus(403);
-      next();
     }
     // {username: req.body.username, email: req.body.email, name: req.body.name}}
     const update = _.pick(req.body, ['username', 'email', 'name']);
@@ -50,22 +52,27 @@ router.route('/user/:user_id?')
     });
   })
   .post(function(req, res, next) {
+    winston.debug(`${req.user.username} is being created.`);
     if(req.user) {
       res.sendStatus(400);
     } else {
       const newUser = _.omit(req.body, 'password');
       User.create(newUser).then(function(createdUser) {
         if(createdUser.setPassword(req.body.password)){
+          winston.info(`${req.user.username} created.`);
           res.sendStatus(201);
         } else {
           User.remove(createdUser).then(function(){
+            winston.debug(`${req.user.username} could not be created.`);
             res.sendStatus(400);
           }, function() {
             next(new Error('Error deleting user'));
           });
+          winston.debug(`${req.user.username} could not be created.`);
           res.sendStatus(400);
         }
       }, function() {
+        winston.debug(`${req.user.username} could not be created.`);
         res.sendStatus(400);
       });
     }
