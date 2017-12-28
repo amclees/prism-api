@@ -8,6 +8,10 @@ const Group = mongoose.model('Group');
 router.route('/group/:group_id')
     .get(function(req, res, next) {
       Group.findById(req.params.group_id).then(function(group) {
+        if (group === null) {
+          res.sendStatus(404);
+          return;
+        }
         res.json(group);
       }, function(err) {
         err.status = 404;
@@ -16,6 +20,10 @@ router.route('/group/:group_id')
     })
     .patch(function(req, res, next) {
       Group.findByIdAndUpdate(req.params.group_id, {$set: req.body}, {new: true, runValidators: true}).then(function(updatedGroup) {
+        if (updatedGroup === null) {
+          res.sendStatus(404);
+          return;
+        }
         res.json(updatedGroup);
         winston.info(`Updated group with id ${req.params.group_id}`);
       }, function(err) {
