@@ -9,14 +9,21 @@ const Review = mongoose.model('Review');
 router.route('/program/:program_id')
     .get(function(req, res, next) {
       Program.findById(req.params.program_id).then(function(program) {
+        if (program === null) {
+          next();
+          return;
+        }
         res.json(program);
       }, function(err) {
-        err.status = 404;
         next(err);
       });
     })
     .patch(function(req, res, next) {
       Program.findByIdAndUpdate(req.params.program_id, {$set: req.body}, {new: true, runValidators: true}).then(function(updatedProgram) {
+        if (updatedProgram === null) {
+          next();
+          return;
+        }
         res.json(updatedProgram);
         winston.info(`Updated program with id ${req.params.program_id}`);
       }, function(err) {
@@ -41,6 +48,8 @@ router.route('/program/:program_id')
           res.sendStatus(400);
           winston.info(`Tried to remove program with id ${req.params.program_id} but it had dependents`);
         }
+      }, function(err) {
+        next(err);
       });
     });
 
