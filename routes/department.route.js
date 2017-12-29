@@ -9,14 +9,21 @@ const Program = mongoose.model('Program');
 router.route('/department/:department_id')
     .get(function(req, res, next) {
       Department.findById(req.params.department_id).populate('chairs').then(function(department) {
+        if (department === null) {
+          next();
+          return;
+        }
         res.json(department);
       }, function(err) {
-        err.status = 404;
         next(err);
       });
     })
     .patch(function(req, res, next) {
       Department.findByIdAndUpdate(req.params.department_id, {$set: req.body}, {new: true, runValidators: true}).then(function(updatedDepartment) {
+        if (updatedDepartment === null) {
+          next();
+          return;
+        }
         res.json(updatedDepartment);
         winston.info(`Updated department with id ${req.params.department_id}`);
       }, function(err) {
@@ -41,6 +48,8 @@ router.route('/department/:department_id')
           res.sendStatus(400);
           winston.info(`Tried to remove department with id ${req.params.department_id} but it had dependents`);
         }
+      }, function(err) {
+        next(err);
       });
     });
 

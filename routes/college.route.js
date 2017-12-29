@@ -9,14 +9,21 @@ const Department = mongoose.model('Department');
 router.route('/college/:college_id')
     .get(function(req, res, next) {
       College.findById(req.params.college_id).populate('deans').then(function(college) {
+        if (college === null) {
+          next();
+          return;
+        }
         res.json(college);
       }, function(err) {
-        err.status = 404;
         next(err);
       });
     })
     .patch(function(req, res, next) {
       College.findByIdAndUpdate(req.params.college_id, {$set: req.body}, {new: true, runValidators: true}).then(function(updatedCollege) {
+        if (updatedCollege === null) {
+          next();
+          return;
+        }
         res.json(updatedCollege);
         winston.info(`Updated college with id ${req.params.college_id}`);
       }, function(err) {
