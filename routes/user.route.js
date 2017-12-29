@@ -12,27 +12,43 @@ winston.level = process.env.LOG_LEVEL || 'info';
 router.param('user_id', function(req, res, next, id) {
   req.id = id;
   try {
-    User.findOne({_id: mongoose.Types.ObjectId(id)}).then((user) => {
-      req.user = user.excludeFields();
+    User.findById(id).then((user) => {
+      req.user = user;
       next();
     }, () => {
       next();
     });
   } catch (err) {
-    // Invalid user id
+    // Invalid object id
     next();
   }
 });
 
 router.route('/user/:user_id?')
   .all(function(req, res, next) {
+    var awesome_instanc = new User({
+    "username": "Drdsdf009",
+    "email": "benjairsolis@yahoo.com",
+    "internal": true,
+    "enabled": true,
+    "root": false,
+    "name": {
+        "first": "Diucdsgf",
+        "last": "Sudcd"
+    }
+});
+
+    // Save the new model instance, passing a callback
+    awesome_instance.save(function (err) {
+      if (err) return handleError(err);
+      // saved!
+    });
     // Access control
     next();
   })
   .get(function(req, res, next) {
     if (req.user) {
-      // Excludes passwordHash field
-      res.json(_.omit(req.user, 'passwordHash'));
+      res.json(_.omit(req.user, ['passwordHash', 'enabled']));
     } else {
       res.sendStatus(404);
     }
@@ -44,7 +60,7 @@ router.route('/user/:user_id?')
     }
     // {username: req.body.username, email: req.body.email, name: req.body.name}}
     const update = _.pick(req.body, ['username', 'email', 'name']);
-    User.findOneAndUpdate({_id: req.id}, {$set: update, {new: true,
+    User.findOneAndUpdate({_id: req.id}, {$set: update}, {new: true,
         runValidators: true}).then(function(updatedUser) {
       res.json(updatedUser);
     }, function(err) {
@@ -52,43 +68,27 @@ router.route('/user/:user_id?')
     });
   })
   .post(function(req, res, next) {
-    winston.debug(`${req.user.username} is being created.`);
-    if(req.user) {
-      res.sendStatus(400);
-    } else {
-      const newUser = _.omit(req.body, 'password');
-      User.create(newUser).then(function(createdUser) {
-        if(createdUser.setPassword(req.body.password)){
-          winston.info(`${req.user.username} created.`);
-          res.sendStatus(201);
-        } else {
-          User.remove(createdUser).then(function(){
-            winston.debug(`${req.user.username} could not be created.`);
-            res.sendStatus(400);
-          }, function() {
-            next(new Error('Error deleting user'));
-          });
-          winston.debug(`${req.user.username} could not be created.`);
-          res.sendStatus(400);
-        }
-      }, function() {
-        winston.debug(`${req.user.username} could not be created.`);
-        res.sendStatus(400);
-      });
-    }
+    const newUser = _.omit(req.body, 'password');
+    User.create(newUser).then(function(createdUser) {
+      createdUser.setPassword(req.body.password);
+      winston.info(`User ${createdUser.username} created.`);
+      res.json(createdUser.excludeFields());
+    }, function(err) {
+      next(new Error(err));
+    });
   })
-  // Deletion will disable users not delete them
   .delete(function(req, res, next) {
-    if (req.user) {
-      User.findOneAndUpdate({_id: req.id}, {$set: {enabled: false}, {new: true,
+    //if (req.user) {
+      // Deletion will disable users not delete them
+      User.findOneAndUpdate({_id: req.param.id}, {$set: {enabled: false}}, {new: true,
         runValidators:true}).then(function(disabledUser){
           res.sendStatus(204);
       }, function() {
         next(new Error('Error disabling user'));
       });
-    } else {
-      res.sendStatus(404);
-    }
+    // } else {
+    //   res.sendStatus(404);
+    // }
   })
 
 module.exports = router;
