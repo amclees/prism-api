@@ -1,19 +1,21 @@
+const winston = require('winston');
+
 module.exports = function(app) {
-  // catch 404 and forward to error handler
   app.use(function(req, res, next) {
+    winston.info('Ran 404');
     const err = new Error('Not Found');
     err.status = 404;
     next(err);
   });
 
-  // error handler
-  app.use(function(err, req, res) {
-    // set locals, only providing error in development
-    res.locals.message = err.message;
-    res.locals.error = req.app.get('env') === 'development' ? err : {};
+  app.use(function(err, req, res, next) {
+    winston.debug('Caught error:', err);
 
-    // render the error page
+    if (err.name === 'ValidationError') {
+      err.status = 400;
+    }
+
     res.status(err.status || 500);
-    res.render('error');
+    res.json(req.app.get('env') === 'development' ? err : {'error': 'An error has occured. Please contact the system administrators.'});
   });
 };
