@@ -5,6 +5,7 @@ const winston = require('winston');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const validatorModule = require('validator');
+const _ = require('lodash');
 
 const settings = require('../lib/config/settings');
 const validators = require('./validators');
@@ -66,6 +67,8 @@ userSchema.path('email').validate({
   message: 'Email must be a valid email'
 });
 
+const fieldsToExcludeWithConfig = ['email', 'internal', 'root', 'samlType', 'passwordHash'];
+const fieldsToExclude = fieldsToExcludeWithConfig.concat('config');
 userSchema.methods = {
   setPassword: function(passwordPlaintext) {
     return bcrypt.hash(passwordPlaintext, settings.saltRounds).then((passwordHash) => {
@@ -81,6 +84,14 @@ userSchema.methods = {
   },
   comparePassword: function(passwordPlaintext) {
     return bcrypt.compare(passwordPlaintext, this.passwordHash);
+  },
+  // Should always be used when revealing a User object to another user
+  excludeFields: function(fields = fieldsToExclude) {
+    return _.omit(this.toObject(), fields);
+  },
+  // Should be used when revealing a User object that is the user making the request
+  excludeFieldsWithConfig: function() {
+    this.excludeFields(fieldsToExcludeWithConfig);
   }
 };
 
