@@ -30,7 +30,20 @@ const userSchema = new mongoose.Schema({
     default: false
   },
   samlType: String,
-  passwordHash: String
+  passwordHash: String,
+  config: {
+    type: {
+      email: {
+        type: {
+          documentFinalized: Boolean,
+          newComment: Boolean,
+          meetingChange: Boolean
+        },
+        default: {}
+      }
+    },
+    default: {}
+  }
 });
 
 userSchema.index({username: 1});
