@@ -23,10 +23,8 @@ const documentSchema = new mongoose.Schema({
         type: String,
         required: notDeleted
       },
-      filePath: {
-        type: String,
-        required: notDeleted
-      },
+      filename: String,
+      fileExtension: String,
       dateUploaded: {
         type: Date,
         default: Date.now
@@ -50,6 +48,10 @@ const documentSchema = new mongoose.Schema({
   }
 });
 
+documentSchema.methods.validRevision = function(index) {
+  return index >= 0 && index < this.revisions.length && !this.revisions[index].deleted;
+};
+
 documentSchema.methods.setRevision = function(index) {
   try {
     winston.debug('Setting document currentRevision');
@@ -57,7 +59,7 @@ documentSchema.methods.setRevision = function(index) {
       winston.info('Setting revision to undefined');
       this.currentRevision = index;
       return true;
-    } else if (index >= 0 && index < this.revisions.length && !this.revisions[index].deleted) {
+    } else if (this.validRevision(index)) {
       winston.info(`Setting revision to index ${index}`);
       this.currentRevision = index;
       return true;
@@ -71,10 +73,10 @@ documentSchema.methods.setRevision = function(index) {
   }
 };
 
-documentSchema.methods.addRevision = function(message, filePath, uploader) {
+documentSchema.methods.addRevision = function(message, filename, uploader) {
   this.revisions.push({
     'message': message,
-    'filePath': filePath,
+    'filename': filename,
     'uploader': uploader
   });
 };
@@ -90,7 +92,7 @@ documentSchema.methods.deleteRevision = function(toDelete) {
       reject(new Error('Attempted to delete template revision'));
       return;
     }
-    fileUtils.deleteFile(this.revisions[index].filePath).then(() => {
+    fileUtils.deleteFile(this.revisions[index].filename).then(() => {
       if (this.currentRevision === index) {
         this.currentRevision = undefined;
       }

@@ -1,11 +1,34 @@
 const winston = require('winston');
 const _ = require('lodash');
+const multer = require('multer');
+const path = require('path');
 const express = require('express');
 const router = express.Router();
 
 const mongoose = require('mongoose');
 const Document = mongoose.model('Document');
 const Comment = mongoose.model('Comment');
+
+const settings = require('../lib/config/settings');
+
+const upload =
+    multer({
+      storage: multer.diskStorage({
+        destination: process.env.FILE_DIR
+      }),
+      fileFilter: function(req, file, callback) {
+        if (settings.revisionExtensions.includes(path.extname(file.originalname).toLowerCase())) {
+          callback(null, true);
+        } else {
+          callback(new Error('Invalid file extension'));
+        }
+      },
+      limits: {
+        fields: 0,
+        files: 1,
+        fileSize: settings.revisionMaxFileSize
+      }
+    }).single('file');
 
 router.route('/document/:document_id')
     .get(function(req, res, next) {
@@ -77,7 +100,59 @@ router.route('/document').post(function(req, res, next) {
 router.route('/document/:document_id/comment/:comment_id');
 router.route('/document/:document_id/comment');
 
-router.route('/document/:document_id/revision/:revision/file');
+router.route('/document/:document_id/revision/:revision/file')
+    .get(function(req, res, next) {
+      Document.findById(req.params.document_id).then(function(document) {
+        if (document === null || !document.validRevision(req.params.revision) || document.revisions[req.params.revision].filename === null) {
+          next();
+          return;
+        }
+        // Placeholder until user is on the request from Passport
+        req.user = {
+          username: 'placeholderUsername'
+        };
+        const filename = `${document.title}_revision_${Number.parseInt(req.params.revision) + 1}_${req.user.username}${document.revisions[req.params.revision].fileExtension}`;
+        res.set('Content-Disposition', `attachment; filename="${filename}"`);
+        const options = {
+          root: process.env.FILE_DIR
+        };
+        res.sendFile(document.revisions[req.params.revision].filename, options);
+      }, function(err) {
+        next(err);
+        winston.info(`Failed to find document with id ${req.params.document_id} for revision deletion`);
+      });
+    })
+    .post(function(req, res, next) {
+      Document.findById(req.params.document_id).then(function(document) {
+        if (document === null || !document.validRevision(req.params.revision)) {
+          next();
+          return;
+        }
+        if (document.revisions[req.params.revision].filename !== null) {
+          const err = new Error('Revision file must be null for a new file to be uploaded');
+          err.status = 400;
+          next(err);
+          return;
+        }
+        upload(req, res, function(multerError) {
+          if (multerError) {
+            next(multerError);
+            return;
+          }
+          document.revisions[req.params.revision].filename = req.file.filename;
+          document.revisions[req.params.revision].fileExtension = path.extname(req.file.originalname).toLowerCase();
+          document.save().then(function() {
+            res.sendStatus(200);
+          }, function(err) {
+            next(err);
+            winston.error('Error saving document after file upload', err);
+          });
+        });
+      }, function(err) {
+        next(err);
+        winston.info(`Failed to find document with id ${req.params.document_id} for revision deletion`);
+      });
+    });
 
 router.route('/document/:document_id/revision/:revision').delete(function(req, res, next) {
   Document.findById(req.params.document_id).then(function(document) {
@@ -97,7 +172,7 @@ router.route('/document/:document_id/revision/:revision').delete(function(req, r
 router.route('/document/:document_id/revision').post(function(req, res, next) {
   Document.findById(req.params.document_id).then(function(document) {
     // 5a43f8aa5bdba705085a5648 is a placeholder until Passport adds the user to the request
-    document.addRevision(req.body.message, 'PLACEHOLDER_FILEPATH', '5a43f8aa5bdba705085a5648');
+    document.addRevision(req.body.message, null, '5a43f8aa5bdba705085a5648');
     document.save().then(function() {
       res.sendStatus(201);
       winston.info(`Created revision ${req.params.revision} on document ${req.params.document_id}`);
