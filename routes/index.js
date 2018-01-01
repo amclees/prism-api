@@ -4,5 +4,6 @@ module.exports = [
   require('./department.route'),
   require('./document.route'),
   require('./program.route'),
+  require('./action.route'),
   require('./test_endpoint')
 ];

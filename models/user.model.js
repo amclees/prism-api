@@ -68,6 +68,10 @@ userSchema.methods = {
   },
   comparePassword: function(passwordPlaintext) {
     return bcrypt.compare(passwordPlaintext, this.passwordHash);
+  },
+  // Placeholder until user-config changes
+  excludeFields: function() {
+    return this.toObject();
   }
 };
 
