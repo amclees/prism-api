@@ -14,7 +14,7 @@ app.disable('x-powered-by');
 
 const db = require('./db');
 const routes = require('./routes');
-
+require('./lib/config/passport');
 
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(morgan(process.env.MORGAN_MODE ? process.env.MORGAN_MODE : 'combined', {stream: winston.infoStream}));

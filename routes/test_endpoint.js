@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const passport = require('passport');
 
-router.get('/test-endpoint', function(req, res) {
-  res.send('Success');
+
+
+router.get('/test_endpoint', passport.authenticate('jwt', {session: false}), function(req, res) {
+ res.send('successfull token');
 });
 
 module.exports = router;
