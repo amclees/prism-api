@@ -3,6 +3,8 @@
 const mongoose = require('mongoose');
 const winston = require('winston');
 
+const settings = require('../lib/config/settings');
+
 const fileUtils = require('../lib/file_utils.js');
 
 const notDeleted = function() {
@@ -41,8 +43,30 @@ const documentSchema = new mongoose.Schema({
   },
   comments: {
     type: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Comment'
+      text: {
+        type: String,
+        required: true,
+        maxLength: settings.maxCommentLength
+      },
+      author: {
+        type: {
+          _id: mongoose.Schema.Types.ObjectId,
+          username: {type: String, required: true},
+          name: {
+            first: {type: String, required: true},
+            last: {type: String, required: true}
+          }
+        },
+        required: true
+      },
+      creationDate: {
+        type: String,
+        required: true
+      },
+      revision: {
+        type: Number,
+        required: true
+      }
     }],
     default: []
   }
