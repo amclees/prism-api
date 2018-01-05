@@ -1,7 +1,5 @@
 'use strict';
 
-require('dotenv').config();
-
 const mongoose = require('mongoose');
 
 const departmentSchema = new mongoose.Schema({
@@ -9,14 +7,18 @@ const departmentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  abbreviation: {
+    type: String,
+    required: true
+  },
   college: {
     type: mongoose.Schema.Types.ObjectId,
     required: true
   },
-  chair: {
+  chairs: [{
     type: mongoose.Schema.Types.ObjectId,
-    required: true
-  }
+    ref: 'User'
+  }]
 });
 
 module.exports = mongoose.model('Department', departmentSchema);
