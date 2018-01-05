@@ -7,7 +7,6 @@ const router = express.Router();
 
 const mongoose = require('mongoose');
 const Document = mongoose.model('Document');
-const Comment = mongoose.model('Comment');
 
 const settings = require('../lib/config/settings');
 
@@ -40,46 +39,25 @@ router.route('/document/:document_id')
     })
     .patch(function(req, res, next) {
       for (let property of _.keys(req.body)) {
-        if (!(property === 'title' || property === 'currentRevision')) {
+        if (property !== 'title') {
           res.sendStatus(400);
           return;
         }
       }
-      if (req.body.currentRevision !== undefined) {
-        Document.findById(req.params.document_id).then(function(document) {
-          document.title = req.body.title;
-          if (document.setRevision(req.body.currentRevision)) {
-            document.save().then(function() {
-              res.json(document);
-              winston.info(`Updated document with id ${req.params.document_id}`);
-            }, function(err) {
-              next(err);
-            });
-          } else {
-            res.sendStatus(400);
-          }
-        }, function(err) {
-          next(err);
-        });
-      } else {
-        Document.findByIdAndUpdate(req.params.document_id, {$set: req.body}, {new: true, runValidators: true}).then(function(updatedDocument) {
-          res.json(updatedDocument);
-          winston.info(`Updated document with id ${req.params.document_id}`);
-        }, function(err) {
-          next(err);
-        });
-      }
+      Document.findByIdAndUpdate(req.params.document_id, {$set: req.body}, {new: true, runValidators: true}).then(function(updatedDocument) {
+        res.json(updatedDocument);
+        winston.info(`Updated document with id ${req.params.document_id}`);
+      }, function(err) {
+        next(err);
+      });
     })
     .delete(function(req, res, next) {
-      Document.findByIdAndRemove(req.params.document_id).then(function() {
+      Document.findByIdAndRemove(req.params.document_id).then(function(removedDocument) {
         res.sendStatus(204);
-        winston.info(`Deleted document with id ${req.params.document_id}`);
-        // Need to delete all version files
-        Comment.remove({document: req.params.document_id}).then(function() {
-          winston.info(`Deleted all comments on document ${req.params.document_id}`);
-        }, function(err) {
-          winston.err('Error deleting all document comments', err);
+        const revisionFilenames = _.map(removedDocument.versions, (version) => {
+          return version.filename;
         });
+        winston.info(`Deleted document with id ${req.params.document_id}. Its revision files are [${revisionFilenames.join(', ')}]`);
       }, function(err) {
         next(err);
       });
@@ -150,7 +128,7 @@ router.route('/document/:document_id/revision/:revision/file')
         });
       }, function(err) {
         next(err);
-        winston.info(`Failed to find document with id ${req.params.document_id} for revision deletion`);
+        winston.info(`Failed to find document with id ${req.params.document_id} for revision file upload`);
       });
     });
 
@@ -170,12 +148,35 @@ router.route('/document/:document_id/revision/:revision').delete(function(req, r
 });
 
 router.route('/document/:document_id/revision').post(function(req, res, next) {
+  let revertIndex;
+  if (req.body.revert !== undefined) {
+    revertIndex = Number.parseInt(req.body.revert);
+    if (isNaN(revertIndex)) {
+      res.sendStatus(400);
+      winston.info('Invalid revert index specified when creating a revert revision (could not parse to integer)');
+      return;
+    }
+  }
   Document.findById(req.params.document_id).then(function(document) {
-    // 5a43f8aa5bdba705085a5648 is a placeholder until Passport adds the user to the request
-    document.addRevision(req.body.message, null, '5a43f8aa5bdba705085a5648');
+    try {
+      if (revertIndex !== undefined) {
+        if (!document.validRevision(revertIndex)) {
+          res.sendStatus(400);
+          winston.info('Invalid revert index specified when creating a revert revision');
+          return;
+        }
+        document.addRevision(`Revert to revision: '${document.revisions[revertIndex].message}'`, req.user._id);
+        document.revisions[document.revisions.length - 1].filename = document.revisions[revertIndex].filename;
+        document.revisions[document.revisions.length - 1].fileExtension = document.revisions[revertIndex].fileExtension;
+      } else {
+        document.addRevision(req.body.message, req.user._id);
+      }
+    } catch (err) {
+      winston.error('err', err);
+    }
     document.save().then(function() {
       res.sendStatus(201);
-      winston.info(`Created revision ${req.params.revision} on document ${req.params.document_id}`);
+      winston.info(`Created revision on document ${req.params.document_id}`);
     }, function(err) {
       next(err);
       winston.info(`Error deleting revision ${req.params.revision} on document ${req.params.document_id}`);
