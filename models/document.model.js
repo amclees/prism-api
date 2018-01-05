@@ -2,6 +2,7 @@
 
 const mongoose = require('mongoose');
 const winston = require('winston');
+const _ = require('lodash');
 
 const settings = require('../lib/config/settings');
 
@@ -63,8 +64,8 @@ const documentSchema = new mongoose.Schema({
   }
 });
 
-documentSchema.methods.validRevision = function(index) {
-  return index >= 0 && index < this.revisions.length && !this.revisions[index].deleted;
+documentSchema.methods.validRevision = function(index, allowDeleted = false) {
+  return index >= 0 && index < this.revisions.length && (allowDeleted || !this.revisions[index].deleted);
 };
 
 documentSchema.methods.addRevision = function(message, uploader) {
@@ -75,25 +76,44 @@ documentSchema.methods.addRevision = function(message, uploader) {
   });
 };
 
-documentSchema.methods.deleteRevision = function(toDelete) {
+documentSchema.methods.setDeleted = function(toDelete, deleted) {
   const index = Number.parseInt(toDelete);
   return new Promise((resolve, reject) => {
     if (isNaN(index)) {
       reject(new Error('Index must be a number'));
       return;
     }
-    if (this.revisions[index].template) {
-      reject(new Error('Attempted to delete template revision'));
+    if (deleted !== undefined && !this.validRevision(index)) {
+      reject(new Error('Invalid revision index'));
       return;
     }
-    this.revisions[index].deleted = true;
-    this.save().then(function() {
+    if (this.revisions[index].template) {
+      reject(new Error('Attempted to set deleted on template revision'));
+      return;
+    }
+    this.revisions[index].deleted = deleted;
+    this.save().then(() => {
       resolve();
-      winston.info(`Successfully deleted revision ${index} on document with id ${this._id.toString()}`);
+      winston.info(`Successfully set deleted for revision ${index} on document with id ${this._id.toString()}`);
     }, function(err) {
       reject(err);
     });
   });
+};
+
+documentSchema.methods.excludeFields = function() {
+  const object = this.toObject();
+  object.revisions = _.map(object.revisions, (revision) => {
+    if (revision.deleted) {
+      return {
+        message: 'Deleted revision',
+        deleted: true
+      };
+    } else {
+      return _.omit(revision, ['filename']);
+    }
+  });
+  return object;
 };
 
 module.exports = mongoose.model('Document', documentSchema);

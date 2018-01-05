@@ -32,7 +32,7 @@ const upload =
 router.route('/document/:document_id')
     .get(function(req, res, next) {
       Document.findById(req.params.document_id).populate('comments').then(function(document) {
-        res.json(document);
+        res.json(document.excludeFields());
       }, function(err) {
         next(err);
       });
@@ -45,7 +45,7 @@ router.route('/document/:document_id')
         }
       }
       Document.findByIdAndUpdate(req.params.document_id, {$set: req.body}, {new: true, runValidators: true}).then(function(updatedDocument) {
-        res.json(updatedDocument);
+        res.json(updatedDocument.excludeFields());
         winston.info(`Updated document with id ${req.params.document_id}`);
       }, function(err) {
         next(err);
@@ -67,7 +67,7 @@ router.route('/document/:document_id')
 router.route('/document').post(function(req, res, next) {
   Document.create(req.body).then(function(newDocument) {
     res.status(201);
-    res.json(newDocument);
+    res.json(newDocument.excludeFields());
     winston.info(`Created document with id ${newDocument._id}`);
   }, function(err) {
     next(err);
@@ -134,7 +134,7 @@ router.route('/document/:document_id/revision/:revision/file')
 
 router.route('/document/:document_id/revision/:revision').delete(function(req, res, next) {
   Document.findById(req.params.document_id).then(function(document) {
-    document.deleteRevision(req.params.revision).then(function() {
+    document.setDeleted(req.params.revision, true).then(function() {
       res.sendStatus(204);
       winston.info(`Deleted revision ${req.params.revision} on document ${req.params.document_id}`);
     }, function(err) {
@@ -144,6 +144,21 @@ router.route('/document/:document_id/revision/:revision').delete(function(req, r
   }, function(err) {
     next(err);
     winston.info(`Failed to find document with id ${req.params.document_id} for revision deletion`);
+  });
+});
+
+router.route('/document/:document_id/revision/:revision/restore').post(function(req, res, next) {
+  Document.findById(req.params.document_id).then(function(document) {
+    document.setDeleted(req.params.revision, undefined).then(function() {
+      res.sendStatus(200);
+      winston.info(`Restored revision ${req.params.revision} on document ${req.params.document_id}`);
+    }, function(err) {
+      next(err);
+      winston.info(`Error restoring revision ${req.params.revision} on document ${req.params.document_id}`);
+    });
+  }, function(err) {
+    next(err);
+    winston.info(`Failed to find document with id ${req.params.document_id} for revision restoration`);
   });
 });
 
