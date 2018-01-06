@@ -12,10 +12,11 @@ router.get('/actions', function(req, res, next) {
   const query = {};
   const page = req.query.page ? req.query.page : 0;
   Action.find(query).sort({date: 'desc'}).limit(settings.actionsPerPage).skip(settings.actionsPerPage * page).populate('user').exec().then(function(actions) {
+    const excludedActions = [];
     for (let action of actions) {
-      action.user = action.user.excludeFields();
+      excludedActions.push(action.excludeFieldsFromUsers());
     }
-    res.json(actions);
+    res.json(excludedActions);
   }, function(err) {
     next(err);
     winston.error('Error fetching all actions:', err);
