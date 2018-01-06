@@ -12,7 +12,9 @@ const passport = require('passport');
 const app = express();
 app.disable('x-powered-by');
 
+const access = require('./lib/access');
 const db = require('./db');
+db.init([access.init]);
 const routes = require('./routes');
 require('./lib/config/passport');
 
