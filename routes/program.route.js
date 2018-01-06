@@ -6,6 +6,8 @@ const mongoose = require('mongoose');
 const Program = mongoose.model('Program');
 const Review = mongoose.model('Review');
 
+const actionLogger = require('../lib/action_logger');
+
 router.route('/program/:program_id')
     .get(function(req, res, next) {
       Program.findById(req.params.program_id).then(function(program) {
@@ -26,6 +28,7 @@ router.route('/program/:program_id')
         }
         res.json(updatedProgram);
         winston.info(`Updated program with id ${req.params.program_id}`);
+        actionLogger.log('updated a program', req.user, 'program', updatedProgram._id);
       }, function(err) {
         next(err);
       });
@@ -58,6 +61,7 @@ router.route('/program').post(function(req, res, next) {
     res.status(201);
     res.json(newProgram);
     winston.info(`Created program with id ${newProgram._id}`);
+    actionLogger.log(`created a new program, ${newProgram.name}`, req.user, 'program', newProgram._id);
   }, function(err) {
     next(err);
     winston.info('Failed to create program with body:', req.body);

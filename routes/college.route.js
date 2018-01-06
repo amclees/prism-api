@@ -6,6 +6,8 @@ const mongoose = require('mongoose');
 const College = mongoose.model('College');
 const Department = mongoose.model('Department');
 
+const actionLogger = require('../lib/action_logger');
+
 router.route('/college/:college_id')
     .get(function(req, res, next) {
       College.findById(req.params.college_id).populate('deans').then(function(college) {
@@ -26,6 +28,7 @@ router.route('/college/:college_id')
         }
         res.json(updatedCollege);
         winston.info(`Updated college with id ${req.params.college_id}`);
+        actionLogger.log('updated a college', req.user, 'college', updatedCollege._id);
       }, function(err) {
         next(err);
       });
@@ -58,6 +61,7 @@ router.route('/college').post(function(req, res, next) {
     res.status(201);
     res.json(newCollege);
     winston.info(`Created college with id ${newCollege._id}`);
+    actionLogger.log(`created a new college, ${newCollege.name}`, req.user, 'college', newCollege._id);
   }, function(err) {
     next(err);
     winston.info('Failed to create college with body:', req.body);
