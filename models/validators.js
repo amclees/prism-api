@@ -13,7 +13,7 @@ exports.unique = function(modelName, path) {
         if (error) {
           winston.log('error', `Error querying to check uniqueness of ${modelName} model: ${error}`);
         }
-        winston.log('debug', `Finished checking uniqueness on user, returning ${!error && results.length === 0}`);
+        winston.log('debug', `Finished checking uniqueness on ${modelName} model, returning ${!error && results.length === 0}`);
         done(!error && results.length === 0);
       });
     } else {
