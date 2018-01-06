@@ -2,31 +2,23 @@
 
 const mongoose = require('mongoose');
 const winston = require('winston');
+const _ = require('lodash');
 
-const fileUtils = require('../lib/file_utils.js');
-
-const notDeleted = function() {
-  return !this.deleted;
-};
+const settings = require('../lib/config/settings');
 
 const documentSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true
   },
-  currentRevision: {
-    type: Number
-  },
   revisions: {
     type: [{
       message: {
         type: String,
-        required: notDeleted
+        required: true
       },
-      filePath: {
-        type: String,
-        required: notDeleted
-      },
+      filename: String,
+      fileExtension: String,
       dateUploaded: {
         type: Date,
         default: Date.now
@@ -34,79 +26,94 @@ const documentSchema = new mongoose.Schema({
       uploader: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: notDeleted
+        required: true
       },
-      deleted: Boolean,
-      template: Boolean
+      template: Boolean,
+      deleted: Boolean
     }],
     default: []
   },
   comments: {
     type: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Comment'
+      text: {
+        type: String,
+        required: true,
+        maxLength: settings.maxCommentLength
+      },
+      author: {
+        type: {
+          _id: mongoose.Schema.Types.ObjectId,
+          username: {type: String, required: true},
+          name: {
+            first: {type: String, required: true},
+            last: {type: String, required: true}
+          }
+        },
+        required: true
+      },
+      creationDate: {
+        type: String,
+        required: true
+      },
+      revision: {
+        type: Number,
+        required: true
+      }
     }],
     default: []
   }
 });
 
-documentSchema.methods.setRevision = function(index) {
-  try {
-    winston.debug('Setting document currentRevision');
-    if (index === undefined) {
-      winston.info('Setting revision to undefined');
-      this.currentRevision = index;
-      return true;
-    } else if (index >= 0 && index < this.revisions.length && !this.revisions[index].deleted) {
-      winston.info(`Setting revision to index ${index}`);
-      this.currentRevision = index;
-      return true;
-    } else {
-      winston.error(`Attempted to set revision to ${index} but it was invalid`);
-      return false;
-    }
-  } catch (err) {
-    winston.error('Error setting revision', err);
-    return false;
-  }
+documentSchema.methods.validRevision = function(index, allowDeleted = false) {
+  return index >= 0 && index < this.revisions.length && (allowDeleted || !this.revisions[index].deleted);
 };
 
-documentSchema.methods.addRevision = function(message, filePath, uploader) {
+documentSchema.methods.addRevision = function(message, uploader) {
   this.revisions.push({
     'message': message,
-    'filePath': filePath,
+    'filename': null,
     'uploader': uploader
   });
 };
 
-documentSchema.methods.deleteRevision = function(toDelete) {
+documentSchema.methods.setDeleted = function(toDelete, deleted) {
   const index = Number.parseInt(toDelete);
   return new Promise((resolve, reject) => {
     if (isNaN(index)) {
-      reject(new Error('currentRevision must be a number'));
+      reject(new Error('Index must be a number'));
+      return;
+    }
+    if (deleted !== undefined && !this.validRevision(index)) {
+      reject(new Error('Invalid revision index'));
       return;
     }
     if (this.revisions[index].template) {
-      reject(new Error('Attempted to delete template revision'));
+      reject(new Error('Attempted to set deleted on template revision'));
       return;
     }
-    fileUtils.deleteFile(this.revisions[index].filePath).then(() => {
-      if (this.currentRevision === index) {
-        this.currentRevision = undefined;
-      }
-      this.revisions[index] = {
-        deleted: true
-      };
-      winston.info('Successfully deleted version file');
-      this.save().then(function() {
-        resolve();
-      }, function(err) {
-        reject(err);
-      });
+    this.revisions[index].deleted = deleted;
+    this.save().then(() => {
+      resolve();
+      winston.info(`Successfully set deleted for revision ${index} on document with id ${this._id.toString()}`);
     }, function(err) {
       reject(err);
     });
   });
+};
+
+documentSchema.methods.excludeFields = function() {
+  const object = this.toObject();
+  object.revisions = _.map(object.revisions, (revision) => {
+    if (revision.deleted) {
+      return {
+        message: 'Deleted revision',
+        deleted: true
+      };
+    } else {
+      return _.omit(revision, ['filename']);
+    }
+  });
+  return object;
 };
 
 module.exports = mongoose.model('Document', documentSchema);

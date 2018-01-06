@@ -1,6 +1,5 @@
 exports.Action = require('./action.model');
 exports.College = require('./college.model');
-exports.Comment = require('./comment.model');
 exports.Department = require('./department.model');
 exports.Document = require('./document.model');
 exports.Group = require('./group.model');
