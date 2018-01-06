@@ -28,10 +28,16 @@ const actionSchema = new mongoose.Schema({
 
 actionSchema.path('type').validate({
   validator: function(type) {
-    return ['college', 'comment', 'department', 'document', 'group', 'program', 'review', 'review', 'user'].includes(type);
+    return ['college', 'department', 'document', 'group', 'program', 'review', 'review', 'user'].includes(type);
   },
   isAsync: false,
   message: 'Action must have a valid type, see list of action types'
 });
+
+actionSchema.methods.excludeFieldsFromUsers = function() {
+  const excluded = this.toObject();
+  excluded.user = this.user.excludeFields();
+  return excluded;
+};
 
 module.exports = mongoose.model('Action', actionSchema);
