@@ -91,7 +91,7 @@ userSchema.methods = {
   },
   // Should be used when revealing a User object that is the user making the request
   excludeFieldsWithConfig: function() {
-    this.excludeFields(fieldsToExcludeWithConfig);
+    return this.excludeFields(fieldsToExcludeWithConfig);
   }
 };
 
