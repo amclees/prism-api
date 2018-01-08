@@ -24,8 +24,10 @@ const documentSchema = new mongoose.Schema({
         default: Date.now
       },
       uploader: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        type: {
+          _id: {type: mongoose.Schema.Types.ObjectId, required: true},
+          username: {type: String, required: true},
+        },
         required: true
       },
       template: Boolean,
@@ -72,7 +74,10 @@ documentSchema.methods.addRevision = function(message, uploader) {
   this.revisions.push({
     'message': message,
     'filename': null,
-    'uploader': uploader
+    'uploader': {
+      'username': uploader.username,
+      '_id': uploader._id
+    }
   });
 };
 

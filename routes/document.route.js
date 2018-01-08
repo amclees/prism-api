@@ -8,6 +8,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Document = mongoose.model('Document');
 
+const access = require('../lib/access');
 const settings = require('../lib/config/settings');
 
 const upload =
@@ -30,14 +31,14 @@ const upload =
     }).single('file');
 
 router.route('/document/:document_id')
-    .get(function(req, res, next) {
+    .get(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
       Document.findById(req.params.document_id).populate('comments').then(function(document) {
         res.json(document.excludeFields());
       }, function(err) {
         next(err);
       });
     })
-    .patch(function(req, res, next) {
+    .patch(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
       for (let property of _.keys(req.body)) {
         if (property !== 'title') {
           res.sendStatus(400);
@@ -51,7 +52,7 @@ router.route('/document/:document_id')
         next(err);
       });
     })
-    .delete(function(req, res, next) {
+    .delete(access.allowGroups(['Administrators']), function(req, res, next) {
       Document.findByIdAndRemove(req.params.document_id).then(function(removedDocument) {
         res.sendStatus(204);
         const revisionFilenames = _.map(removedDocument.versions, (version) => {
@@ -79,17 +80,15 @@ router.route('/document/:document_id/comment/:comment_id');
 router.route('/document/:document_id/comment');
 
 router.route('/document/:document_id/revision/:revision/file')
+    .all(access.allowGroups(['Administrators', 'Program Review Subcommittee']))
     .get(function(req, res, next) {
       Document.findById(req.params.document_id).then(function(document) {
         if (document === null || !document.validRevision(req.params.revision) || document.revisions[req.params.revision].filename === null) {
           next();
           return;
         }
-        // Placeholder until user is on the request from Passport
-        req.user = {
-          username: 'placeholderUsername'
-        };
-        const filename = `${document.title}_revision_${Number.parseInt(req.params.revision) + 1}_${req.user.username}${document.revisions[req.params.revision].fileExtension}`;
+
+        const filename = `${document.title}_revision_${Number.parseInt(req.params.revision) + 1}_${document.revisions[req.params.revision].uploader.username}${document.revisions[req.params.revision].fileExtension}`;
         res.set('Content-Disposition', `attachment; filename="${filename}"`);
         const options = {
           root: process.env.FILE_DIR
@@ -112,6 +111,11 @@ router.route('/document/:document_id/revision/:revision/file')
           next(err);
           return;
         }
+        if (document.revisions[req.params.revision].uploader !== req.user._id) {
+          winston.warn('Non-uploader attempted to upload to a revision before the uploader');
+          res.sendStatus(403);
+          return;
+        }
         upload(req, res, function(multerError) {
           if (multerError) {
             next(multerError);
@@ -132,7 +136,7 @@ router.route('/document/:document_id/revision/:revision/file')
       });
     });
 
-router.route('/document/:document_id/revision/:revision').delete(function(req, res, next) {
+router.route('/document/:document_id/revision/:revision').delete(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   Document.findById(req.params.document_id).then(function(document) {
     document.setDeleted(req.params.revision, true).then(function() {
       res.sendStatus(204);
@@ -147,7 +151,7 @@ router.route('/document/:document_id/revision/:revision').delete(function(req, r
   });
 });
 
-router.route('/document/:document_id/revision/:revision/restore').post(function(req, res, next) {
+router.route('/document/:document_id/revision/:revision/restore').post(access.allowGroups(['Administrators']), function(req, res, next) {
   Document.findById(req.params.document_id).then(function(document) {
     document.setDeleted(req.params.revision, undefined).then(function() {
       res.sendStatus(200);
@@ -162,7 +166,7 @@ router.route('/document/:document_id/revision/:revision/restore').post(function(
   });
 });
 
-router.route('/document/:document_id/revision').post(function(req, res, next) {
+router.route('/document/:document_id/revision', access.allowGroups(['Administrators', 'Program Review Subcommittee'])).post(function(req, res, next) {
   let revertIndex;
   if (req.body.revert !== undefined) {
     revertIndex = Number.parseInt(req.body.revert);
@@ -180,11 +184,11 @@ router.route('/document/:document_id/revision').post(function(req, res, next) {
           winston.info('Invalid revert index specified when creating a revert revision');
           return;
         }
-        document.addRevision(`Revert to revision: '${document.revisions[revertIndex].message}'`, req.user._id);
+        document.addRevision(`Revert to revision: '${document.revisions[revertIndex].message}'`, req.user);
         document.revisions[document.revisions.length - 1].filename = document.revisions[revertIndex].filename;
         document.revisions[document.revisions.length - 1].fileExtension = document.revisions[revertIndex].fileExtension;
       } else {
-        document.addRevision(req.body.message, req.user._id);
+        document.addRevision(req.body.message, req.user);
       }
     } catch (err) {
       winston.error('err', err);
