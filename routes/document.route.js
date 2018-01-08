@@ -51,6 +51,7 @@ router.route('/document/:document_id')
         next(err);
       });
     })
+    // DELETE endpoint is also for testing, the delete endpoint should be called on the event or review
     .delete(function(req, res, next) {
       Document.findByIdAndRemove(req.params.document_id).then(function(removedDocument) {
         res.sendStatus(204);
