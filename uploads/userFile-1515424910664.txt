@@ -1,0 +1,36 @@
+Justin Sarenas 304675389
+Henry Ho 304723723
+
+2. Suppose we have a dataset with 3
+features: X1 = GPA, X2 = Age, X3 = Type of Position (1 for Technical positions, and 0 for
+Non-Technical positions), and we have built a non-linear regression model as:
+Target = 𝜃" + 𝜃%𝑋% + 𝜃'𝑋' + 𝜃(𝑋( + 𝜃)𝑋%𝑋' + 𝜃*𝑋%𝑋(
+The prediction target is “starting salary after graduation” (in thousands of dollars). Suppose we
+train (fit) the model, and get 𝜃" = 30, 𝜃% = 20, 𝜃' = 0.07, 𝜃( = -30, 𝜃) = 0.01, 𝜃* = 10.
+(a) Which answer is correct, and why?
+i. For a fixed value of Age and GPA, Technical positions earn more on average than nontechnical
+positions.
+ii. For a fixed value of Age and GPA, Non-Technical positions earn more on average than
+Technical positions.
+iii. For a fixed value of Age and GPA, Technical positions earn more on average than
+Non-Technical positions when the GPA is high enough.
+iv. For a fixed value of Age and GPA, Non-Technical positions earn more on average than
+Technical positions when the GPA is high enough.
+(b) Predict the salary of a Technical and a Non-Technical positions with Age of 27, GPA of 4.0.
+
+
+a)fixed age = 20 fixed gpa = 2.0 fixed high gpa = 3.5
+
+i. 30+20(20)+.07(3)+(-30*1)+(.01*20*3)+(10*20*1)=600.81
+ii. 30+20(20)+.07(3)+(-30*0)+(.01*20*3)+(10*20*0)= 430.54
+iii. 30+20(20)+.07(3.5)+(-30*1)+(.01*20*3.5)+(10*20*1)= 600.945
+iiii. 30+20(20)+.07(3.5)+(-30*0)+(.01*20*3.5)+(10*20*0)= 430.945
+
+The true statements are i and iii. Technical positions will always have a higher salary because
+in the theta5 part of the equation  technical and nontechnical will always be 1 or 0. So if it is nontechnical
+the theta5 part will be 0 while if it is technical the theta5 part will have a value. So any value that
+is put in the for theta5 multiplied by 1 will always be bigger than being multiplied by zero and you cannot use 
+a negative number as the gpa for theta5. This also holds true for a higher gpa. 
+
+b. Technical 30+20(27)+.07(4)+(-30*1)+(.01*27*4)+(10*20*1)= 741.36
+   NonTechnical 30+20(27)+.07(4)+(-30*0)+(.01*27*4)+(10*20*0)= 571.36

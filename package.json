@@ -39,6 +39,7 @@
     "multer": "^1.3.0",
     "passport": "^0.4.0",
     "passport-jwt": "^3.0.1",
+    "path": "^0.12.7",
     "serve-favicon": "~2.4.5",
     "validator": "^9.0.0",
     "winston": "^2.4.0"
