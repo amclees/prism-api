@@ -27,6 +27,7 @@ router.route('/user/:user_id')
       const update = _.pick(req.body, ['username', 'email', 'name', 'config']);
       User.findByIdAndUpdate(req.params.user_id, {$set: update}, {new: true, runValidators: true}).then(function(updatedUser) {
         res.json(updatedUser.excludeFieldsWithConfig());
+        winston.info(`Updated user ${updatedUser.username} (id: ${updatedUser._id})`);
       }, function(err) {
         next(err);
       });
@@ -35,6 +36,7 @@ router.route('/user/:user_id')
       User.findByIdAndUpdate(req.params.user_id, {$set: {disabled: true}}, {new: true, runValidators: true}).then(function(disabledUser) {
         if (disabledUser) {
           res.sendStatus(204);
+          winston.info(`Disabled user ${disabledUser.username} (id: ${disabledUser._id})`);
         } else {
           res.sendStatus(404);
         }
@@ -48,7 +50,7 @@ router.post('/user', function(req, res, next) {
   User.create(newUser).then(function(createdUser) {
     createdUser.setPassword(req.body.password).then(function() {
       createdUser.save().then(function() {
-        winston.info(`User ${createdUser.username} created.`);
+        winston.info(`User ${createdUser.username} (id: ${createdUser._id}) created.`);
         res.json(createdUser.excludeFields());
       }, function(err) {
         next(err);
@@ -61,7 +63,7 @@ router.post('/user', function(req, res, next) {
   });
 });
 
-router.use('/users', function(req, res, next) {
+router.get('/users', function(req, res, next) {
   User.find().then((users) => {
     // Once groups are attached to req, should allow admins to see disabled users
     res.json(_.map(_.reject(users, 'disabled'), function(user) {
