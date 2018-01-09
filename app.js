@@ -25,6 +25,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(passport.initialize());
 
 const authMiddleware = passport.authenticate('jwt', {session: false});
+
 app.use(function(req, res, next) {
   if (req.path === '/api/login') {
     next();
