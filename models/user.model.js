@@ -31,11 +31,7 @@ const userSchema = new mongoose.Schema({
     default: false
   },
   // Flag for 'deleted' account users
-  enabled: {
-    type: Boolean,
-    required: true,
-    default: true
-  },
+  disabled: Boolean,
   samlType: String,
   passwordHash: String,
   config: {
