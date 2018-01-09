@@ -15,7 +15,7 @@ router.post('/login', function(req, res, next) {
   }
 
   User.findOne({username: req.body.username}).then((user) => {
-    if (user === null) {
+    if (user === null || user.disabled) {
       res.sendStatus(400);
       return;
     }
