@@ -5,5 +5,6 @@ module.exports = [
   require('./group.route'),
   require('./login.route'),
   require('./program.route'),
-  require('./test_endpoint')
+  require('./test_endpoint'),
+  require('./user.route')
 ];
