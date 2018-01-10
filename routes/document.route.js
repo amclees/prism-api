@@ -9,6 +9,7 @@ const mongoose = require('mongoose');
 const Document = mongoose.model('Document');
 
 const access = require('../lib/access');
+const actionLogger = require('../lib/action_logger');
 const settings = require('../lib/config/settings');
 
 const upload =
@@ -48,6 +49,7 @@ router.route('/document/:document_id')
       Document.findByIdAndUpdate(req.params.document_id, {$set: req.body}, {new: true, runValidators: true}).then(function(updatedDocument) {
         res.json(updatedDocument.excludeFields());
         winston.info(`Updated document with id ${req.params.document_id}`);
+        actionLogger.log(`renamed document to ${updatedDocument.title}`, req.user, 'document', updatedDocument._id);
       }, function(err) {
         next(err);
       });
@@ -59,6 +61,7 @@ router.route('/document/:document_id')
           return version.filename;
         });
         winston.info(`Deleted document with id ${req.params.document_id}. Its revision files are [${revisionFilenames.join(', ')}]`);
+        actionLogger.log(`deleted document ${removedDocument.title}`, req.user, 'document', removedDocument._id);
       }, function(err) {
         next(err);
       });
@@ -70,6 +73,7 @@ router.route('/document').post(function(req, res, next) {
     res.status(201);
     res.json(newDocument.excludeFields());
     winston.info(`Created document with id ${newDocument._id}`);
+    actionLogger.log(`created a new document "${newDocument.title}"`, req.user, 'document', newDocument._id);
   }, function(err) {
     next(err);
     winston.info('Failed to create document with body:', req.body);
@@ -141,6 +145,7 @@ router.route('/document/:document_id/revision/:revision').delete(access.allowGro
     document.setDeleted(req.params.revision, true).then(function() {
       res.sendStatus(204);
       winston.info(`Deleted revision ${req.params.revision} on document ${req.params.document_id}`);
+      actionLogger.log(`deleted revision ${req.params.revision} on document ${req.params.document_id}`, req.user, 'document', document._id);
     }, function(err) {
       next(err);
       winston.info(`Error deleting revision ${req.params.revision} on document ${req.params.document_id}`);
@@ -156,6 +161,7 @@ router.route('/document/:document_id/revision/:revision/restore').post(access.al
     document.setDeleted(req.params.revision, undefined).then(function() {
       res.sendStatus(200);
       winston.info(`Restored revision ${req.params.revision} on document ${req.params.document_id}`);
+      actionLogger.log(`restored revision ${req.params.revision} on document ${req.params.document_id}`, req.user, 'document', document._id);
     }, function(err) {
       next(err);
       winston.info(`Error restoring revision ${req.params.revision} on document ${req.params.document_id}`);
@@ -196,6 +202,7 @@ router.route('/document/:document_id/revision', access.allowGroups(['Administrat
     document.save().then(function() {
       res.sendStatus(201);
       winston.info(`Created revision on document ${req.params.document_id}`);
+      actionLogger.log(`Created a revision "${document.revisions[document.revisions.length - 1].message}" on document ${req.params.document_id}`, req.user, 'document', document._id);
     }, function(err) {
       next(err);
       winston.info(`Error deleting revision ${req.params.revision} on document ${req.params.document_id}`);

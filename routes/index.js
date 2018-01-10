@@ -1,4 +1,5 @@
 module.exports = [
+  require('./action.route'),
   require('./college.route'),
   require('./department.route'),
   require('./document.route'),

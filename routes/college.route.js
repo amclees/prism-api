@@ -7,6 +7,7 @@ const College = mongoose.model('College');
 const Department = mongoose.model('Department');
 
 const access = require('../lib/access');
+const actionLogger = require('../lib/action_logger');
 
 router.route('/college/:college_id')
     .all(access.allowGroups(['Administrators']))
@@ -29,6 +30,7 @@ router.route('/college/:college_id')
         }
         res.json(updatedCollege);
         winston.info(`Updated college with id ${req.params.college_id}`);
+        actionLogger.log('updated a college', req.user, 'college', updatedCollege._id);
       }, function(err) {
         next(err);
       });
@@ -61,6 +63,7 @@ router.route('/college').post(access.allowGroups(['Administrators']), function(r
     res.status(201);
     res.json(newCollege);
     winston.info(`Created college with id ${newCollege._id}`);
+    actionLogger.log(`created a new college, ${newCollege.name}`, req.user, 'college', newCollege._id);
   }, function(err) {
     next(err);
     winston.info('Failed to create college with body:', req.body);

@@ -7,6 +7,7 @@ const Program = mongoose.model('Program');
 const Review = mongoose.model('Review');
 
 const access = require('../lib/access');
+const actionLogger = require('../lib/action_logger');
 
 router.route('/program/:program_id')
     .all(access.allowGroups(['Administrators']))
@@ -29,6 +30,7 @@ router.route('/program/:program_id')
         }
         res.json(updatedProgram);
         winston.info(`Updated program with id ${req.params.program_id}`);
+        actionLogger.log('updated a program', req.user, 'program', updatedProgram._id);
       }, function(err) {
         next(err);
       });
@@ -61,6 +63,7 @@ router.route('/program').post(access.allowGroups(['Administrators']), function(r
     res.status(201);
     res.json(newProgram);
     winston.info(`Created program with id ${newProgram._id}`);
+    actionLogger.log(`created a new program, ${newProgram.name}`, req.user, 'program', newProgram._id);
   }, function(err) {
     next(err);
     winston.info('Failed to create program with body:', req.body);

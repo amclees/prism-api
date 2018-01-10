@@ -7,6 +7,7 @@ const Department = mongoose.model('Department');
 const Program = mongoose.model('Program');
 
 const access = require('../lib/access');
+const actionLogger = require('../lib/action_logger');
 
 router.route('/department/:department_id')
     .all(access.allowGroups(['Administrators']))
@@ -29,6 +30,7 @@ router.route('/department/:department_id')
         }
         res.json(updatedDepartment);
         winston.info(`Updated department with id ${req.params.department_id}`);
+        actionLogger.log(`updated a department`, req.user, 'department', updatedDepartment._id);
       }, function(err) {
         next(err);
       });
@@ -61,6 +63,7 @@ router.route('/department').post(access.allowGroups(['Administrators']), functio
     res.status(201);
     res.json(newDepartment);
     winston.info(`Created department with id ${newDepartment._id}`);
+    actionLogger.log(`created a new department, ${newDepartment.name}`, req.user, 'department', newDepartment._id);
   }, function(err) {
     next(err);
     winston.info('Failed to create department with body:', req.body);
