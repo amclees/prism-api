@@ -1,5 +1,6 @@
 module.exports = [
   require('./college.route'),
+  require('./comment.route'),
   require('./department.route'),
   require('./document.route'),
   require('./group.route'),
