@@ -5,7 +5,10 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Group = mongoose.model('Group');
 
+const access = require('../lib/access');
+
 router.route('/group/:group_id')
+    .all(access.allowGroups(['Administrators']))
     .get(function(req, res, next) {
       Group.findById(req.params.group_id).then(function(group) {
         if (group === null) {
@@ -43,7 +46,7 @@ router.route('/group/:group_id')
       });
     });
 
-router.route('/group').post(function(req, res, next) {
+router.route('/group').post(access.allowGroups(['Administrators']), function(req, res, next) {
   Group.create(req.body).then(function(newGroup) {
     res.status(201);
     res.json(newGroup);
@@ -55,6 +58,7 @@ router.route('/group').post(function(req, res, next) {
 });
 
 router.route('/group/:group_id/member/:member_id')
+    .all(access.allowGroups(['Administrators']))
     .put(function(req, res, next) {
       Group.findById(req.params.group_id).then(function(group) {
         if (group.members.indexOf(req.params.member_id) !== -1) {
@@ -86,6 +90,18 @@ router.route('/group/:group_id/member/:member_id')
     })
     .delete(function(req, res, next) {
       Group.findById(req.params.group_id).then(function(group) {
+        try {
+          if (group.name === 'Administrators' && req.user._id.equals(mongoose.Types.ObjectId(req.params.member_id))) {
+            const err = new Error('Administrators cannot remove themselves from the administrator group');
+            err.status = 400;
+            next(err);
+            return;
+          }
+        } catch (err) {
+          next(err);
+          winston.error(err);
+          return;
+        }
         const location = group.members.indexOf(req.params.member_id);
         if (location === -1) {
           res.sendStatus(404);
@@ -107,7 +123,7 @@ router.route('/group/:group_id/member/:member_id')
       });
     });
 
-router.get('/groups', function(req, res, next) {
+router.get('/groups', access.allowGroups(['Administrators']), function(req, res, next) {
   Group.find().exec().then(function(groups) {
     res.json(groups);
   }, function(err) {

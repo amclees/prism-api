@@ -6,7 +6,10 @@ const mongoose = require('mongoose');
 const College = mongoose.model('College');
 const Department = mongoose.model('Department');
 
+const access = require('../lib/access');
+
 router.route('/college/:college_id')
+    .all(access.allowGroups(['Administrators']))
     .get(function(req, res, next) {
       College.findById(req.params.college_id).populate('deans').then(function(college) {
         if (college === null) {
@@ -53,7 +56,7 @@ router.route('/college/:college_id')
       });
     });
 
-router.route('/college').post(function(req, res, next) {
+router.route('/college').post(access.allowGroups(['Administrators']), function(req, res, next) {
   College.create(req.body).then(function(newCollege) {
     res.status(201);
     res.json(newCollege);
@@ -65,7 +68,7 @@ router.route('/college').post(function(req, res, next) {
 });
 
 router.route('/college/:college_id/departments')
-    .get(function(req, res, next) {
+    .get(access.allowGroups(['Administrators']), function(req, res, next) {
       Department.find({college: req.params.college_id}).populate('chairs').then(function(departments) {
         res.json(departments);
       }, function(err) {
@@ -73,7 +76,7 @@ router.route('/college/:college_id/departments')
       });
     });
 
-router.get('/colleges', function(req, res, next) {
+router.get('/colleges', access.allowGroups(['Administrators']), function(req, res, next) {
   College.find().populate('deans').exec().then(function(colleges) {
     res.json(colleges);
   }, function(err) {

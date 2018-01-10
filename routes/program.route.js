@@ -6,7 +6,10 @@ const mongoose = require('mongoose');
 const Program = mongoose.model('Program');
 const Review = mongoose.model('Review');
 
+const access = require('../lib/access');
+
 router.route('/program/:program_id')
+    .all(access.allowGroups(['Administrators']))
     .get(function(req, res, next) {
       Program.findById(req.params.program_id).then(function(program) {
         if (program === null) {
@@ -53,7 +56,7 @@ router.route('/program/:program_id')
       });
     });
 
-router.route('/program').post(function(req, res, next) {
+router.route('/program').post(access.allowGroups(['Administrators']), function(req, res, next) {
   Program.create(req.body).then(function(newProgram) {
     res.status(201);
     res.json(newProgram);
@@ -64,7 +67,7 @@ router.route('/program').post(function(req, res, next) {
   });
 });
 
-router.get('/programs', function(req, res, next) {
+router.get('/programs', access.allowGroups(['Administrators']), function(req, res, next) {
   Program.find().exec().then(function(programs) {
     res.json(programs);
   }, function(err) {
