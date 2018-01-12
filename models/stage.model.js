@@ -27,7 +27,7 @@ const stageSchema = new mongoose.Schema({
     type: Object,
     default: {}
   }
-});
+}, {usePushEach: true});
 
 stageSchema.path('nodes').validate({
   validator: nodeValidator,

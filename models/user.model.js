@@ -47,7 +47,7 @@ const userSchema = new mongoose.Schema({
     },
     default: {}
   }
-});
+}, {usePushEach: true});
 
 userSchema.index({username: 1});
 

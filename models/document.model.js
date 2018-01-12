@@ -64,7 +64,7 @@ const documentSchema = new mongoose.Schema({
     }],
     default: []
   }
-});
+}, {usePushEach: true});
 
 documentSchema.methods.validRevision = function(index, allowDeleted = false) {
   return index >= 0 && index < this.revisions.length && (allowDeleted || !this.revisions[index].deleted);

@@ -14,7 +14,7 @@ const groupSchema = new mongoose.Schema({
     default: []
   },
   access: Boolean
-});
+}, {usePushEach: true});
 
 groupSchema.path('name').validate({
   validator: validators.unique('Group', 'name'),
