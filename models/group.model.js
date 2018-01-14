@@ -2,6 +2,8 @@
 
 const mongoose = require('mongoose');
 
+const validators = require('./validators');
+
 const groupSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -10,7 +12,14 @@ const groupSchema = new mongoose.Schema({
   members: {
     type: [mongoose.Schema.Types.ObjectId],
     default: []
-  }
+  },
+  access: Boolean
+}, {usePushEach: true});
+
+groupSchema.path('name').validate({
+  validator: validators.unique('Group', 'name'),
+  isAsync: true,
+  message: 'Group name must be unique'
 });
 
 module.exports = mongoose.model('Group', groupSchema);

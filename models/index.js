@@ -1,3 +1,4 @@
+exports.Action = require('./action.model');
 exports.College = require('./college.model');
 exports.Department = require('./department.model');
 exports.Document = require('./document.model');
