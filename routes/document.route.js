@@ -33,7 +33,7 @@ const upload =
 
 router.route('/document/:document_id')
     .get(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
-      Document.findById(req.params.document_id).populate('comments').then(function(document) {
+      Document.findById(req.params.document_id).then(function(document) {
         res.json(document.excludeFields());
       }, function(err) {
         next(err);
@@ -41,7 +41,7 @@ router.route('/document/:document_id')
     })
     .patch(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
       for (let property of _.keys(req.body)) {
-        if (property !== 'title') {
+        if (property !== 'title' && property !== 'completionEstimate') {
           res.sendStatus(400);
           return;
         }
@@ -55,13 +55,25 @@ router.route('/document/:document_id')
       });
     })
     .delete(access.allowGroups(['Administrators']), function(req, res, next) {
-      Document.findByIdAndRemove(req.params.document_id).then(function(removedDocument) {
-        res.sendStatus(204);
-        const revisionFilenames = _.map(removedDocument.versions, (version) => {
-          return version.filename;
+      Document.findById(req.params.document_id).then(function(document) {
+        if (document === null) {
+          next();
+          return;
+        }
+        if (document.coreTemplate) {
+          res.sendStatus(400);
+          return;
+        }
+        document.remove().then(function(removedDocument) {
+          res.sendStatus(204);
+          const revisionFilenames = _.map(removedDocument.versions, (version) => {
+            return version.filename;
+          });
+          winston.info(`Deleted document with id ${req.params.document_id}. Its revision files are [${revisionFilenames.join(', ')}]`);
+          actionLogger.log(`deleted document ${removedDocument.title}`, req.user, 'document', removedDocument._id);
+        }, function(err) {
+          next(err);
         });
-        winston.info(`Deleted document with id ${req.params.document_id}. Its revision files are [${revisionFilenames.join(', ')}]`);
-        actionLogger.log(`deleted document ${removedDocument.title}`, req.user, 'document', removedDocument._id);
       }, function(err) {
         next(err);
       });
