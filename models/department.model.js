@@ -19,6 +19,6 @@ const departmentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }]
-});
+}, {usePushEach: true});
 
 module.exports = mongoose.model('Department', departmentSchema);

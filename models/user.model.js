@@ -30,6 +30,8 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Flag for 'deleted' account users
+  disabled: Boolean,
   samlType: String,
   passwordHash: String,
   config: {
@@ -45,7 +47,7 @@ const userSchema = new mongoose.Schema({
     },
     default: {}
   }
-});
+}, {usePushEach: true});
 
 userSchema.index({username: 1});
 
@@ -91,7 +93,7 @@ userSchema.methods = {
   },
   // Should be used when revealing a User object that is the user making the request
   excludeFieldsWithConfig: function() {
-    this.excludeFields(fieldsToExcludeWithConfig);
+    return this.excludeFields(fieldsToExcludeWithConfig);
   }
 };
 

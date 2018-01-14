@@ -6,7 +6,11 @@ const mongoose = require('mongoose');
 const Department = mongoose.model('Department');
 const Program = mongoose.model('Program');
 
+const access = require('../lib/access');
+const actionLogger = require('../lib/action_logger');
+
 router.route('/department/:department_id')
+    .all(access.allowGroups(['Administrators']))
     .get(function(req, res, next) {
       Department.findById(req.params.department_id).populate('chairs').then(function(department) {
         if (department === null) {
@@ -26,6 +30,7 @@ router.route('/department/:department_id')
         }
         res.json(updatedDepartment);
         winston.info(`Updated department with id ${req.params.department_id}`);
+        actionLogger.log(`updated a department`, req.user, 'department', updatedDepartment._id);
       }, function(err) {
         next(err);
       });
@@ -53,11 +58,12 @@ router.route('/department/:department_id')
       });
     });
 
-router.route('/department').post(function(req, res, next) {
+router.route('/department').post(access.allowGroups(['Administrators']), function(req, res, next) {
   Department.create(req.body).then(function(newDepartment) {
     res.status(201);
     res.json(newDepartment);
     winston.info(`Created department with id ${newDepartment._id}`);
+    actionLogger.log(`created a new department, ${newDepartment.name}`, req.user, 'department', newDepartment._id);
   }, function(err) {
     next(err);
     winston.info('Failed to create department with body:', req.body);
@@ -65,7 +71,7 @@ router.route('/department').post(function(req, res, next) {
 });
 
 router.route('/department/:department_id/programs')
-    .get(function(req, res, next) {
+    .get(access.allowGroups(['Administrators']), function(req, res, next) {
       Program.find({department: req.params.department_id}).then(function(programs) {
         res.json(programs);
       }, function(err) {
@@ -73,7 +79,7 @@ router.route('/department/:department_id/programs')
       });
     });
 
-router.get('/departments', function(req, res, next) {
+router.get('/departments', access.allowGroups(['Administrators']), function(req, res, next) {
   Department.find().populate('chairs').exec().then(function(departments) {
     res.json(departments);
   }, function(err) {

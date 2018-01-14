@@ -24,8 +24,10 @@ const documentSchema = new mongoose.Schema({
         default: Date.now
       },
       uploader: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        type: {
+          _id: {type: mongoose.Schema.Types.ObjectId, required: true},
+          username: {type: String, required: true},
+        },
         required: true
       },
       template: Boolean,
@@ -61,8 +63,14 @@ const documentSchema = new mongoose.Schema({
       }
     }],
     default: []
-  }
-});
+  },
+  // Flag set on templates
+  template: Boolean,
+  // Flag set on core templates (templates tied to the base Stage)
+  coreTemplate: Boolean,
+  // Estimated days to complete document (used in templates only)
+  completionEstimate: Number
+}, {usePushEach: true});
 
 documentSchema.methods.validRevision = function(index, allowDeleted = false) {
   return index >= 0 && index < this.revisions.length && (allowDeleted || !this.revisions[index].deleted);
@@ -72,7 +80,10 @@ documentSchema.methods.addRevision = function(message, uploader) {
   this.revisions.push({
     'message': message,
     'filename': null,
-    'uploader': uploader
+    'uploader': {
+      'username': uploader.username,
+      '_id': uploader._id
+    }
   });
 };
 
