@@ -2,6 +2,8 @@
 
 const mongoose = require('mongoose');
 
+const Document = mongoose.model('Document');
+
 const eventSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -46,7 +48,14 @@ const eventSchema = new mongoose.Schema({
 });
 
 eventSchema.methods.addDocument = function(title) {
-
+  return new Promise(function(resolve, reject) {
+    Document.create({
+      'title': title
+    }).then((createdDocument) => {
+      this.documents.push(createdDocument._id);
+      resolve(createdDocument);
+    }, reject);
+  });
 };
 
 eventSchema.methods.changeDate = function(newDate, sendNotifications = true) {
