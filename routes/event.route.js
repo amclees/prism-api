@@ -4,15 +4,15 @@ const express = require('express');
 const router = express.Router();
 
 const mongoose = require('mongoose');
-const Event = mongoose.model('Document');
+const Event = mongoose.model('Event');
 
 const access = require('../lib/access');
 const actionLogger = require('../lib/action_logger');
 
 router.route('/event/:event_id')
-    .all(access.allowEvents(['Administrators']))
+    .all(access.allowGroups(['Administrators']))
     .get(function(req, res, next) {
-      Event.findById(req.params.event_id).then(function(event) {
+      Event.findById(req.params.event_id).populate('documents').then(function(event) {
         if (event === null) {
           next();
           return;
@@ -29,7 +29,7 @@ router.route('/event/:event_id')
           return;
         }
         for (let property of _.keys(req.body)) {
-          if (['title', 'date', 'canceled', 'groups', 'people', 'notifications'].indexOf(property) === -1) {
+          if (['title', 'date', 'groups', 'people', 'notifications'].indexOf(property) === -1) {
             res.sendStatus(400);
             return;
           } else {
@@ -52,8 +52,8 @@ router.route('/event/:event_id')
       });
     })
     .delete(function(req, res, next) {
-      Event.findByIdAndRemove(req.params.event_id).then(function(removedDocument) {
-        if (removedDocument) {
+      Event.findByIdAndRemove(req.params.event_id).then(function(removedEvent) {
+        if (removedEvent) {
           res.sendStatus(204);
           winston.info(`Removed event with id ${req.params.event_id}`);
         } else {
@@ -65,8 +65,11 @@ router.route('/event/:event_id')
       });
     });
 
-router.route('/event').post(access.allowEvents(['Administrators']), function(req, res, next) {
-  Event.create(req.body).then(function(newEvent) {
+router.route('/event').post(access.allowGroups(['Administrators']), function(req, res, next) {
+  Event.create({
+    'title': req.body.title,
+    'date': req.body.date
+  }).then(function(newEvent) {
     res.status(201);
     res.json(newEvent);
     winston.info(`Created event with id ${newEvent._id}`);
@@ -77,7 +80,44 @@ router.route('/event').post(access.allowEvents(['Administrators']), function(req
   });
 });
 
-router.get('/events', access.allowEvents(['Administrators']), function(req, res, next) {
+router.post('/event/:event_id/cancel', access.allowGroups(['Administrators']), function(req, res, next) {
+  Event.findById(req.params.event_id).then(function(event) {
+    if (event.canceled) {
+      res.sendStatus(405);
+      return;
+    }
+    event.cancel();
+    res.sendStatus(200);
+  }, function(err) {
+    next(err);
+  });
+});
+
+router.post('/event/:event_id/document', access.allowGroups(['Administrators']), function(req, res, next) {
+  Event.findById(req.params.event_id).then(function(event) {
+    event.addDocument(req.body.title).then(function(createdDocument) {
+      res.json(createdDocument.excludeFields());
+    }, function(err) {
+      next(err);
+    });
+  }, function(err) {
+    next(err);
+  });
+});
+
+router.delete('/event/:event_id/document/:document', access.allowGroups(['Administrators']), function(req, res, next) {
+  Event.findById(req.params.event_id).populate('documents').then(function(event) {
+    event.deleteDocument(req.params.document).then(function() {
+      res.sendStatus(204);
+    }, function(err) {
+      next(err);
+    });
+  }, function(err) {
+    next(err);
+  });
+});
+
+router.get('/events', access.allowGroups(['Administrators']), function(req, res, next) {
   Event.find().exec().then(function(events) {
     res.json(events);
   }, function(err) {
