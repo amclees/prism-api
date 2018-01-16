@@ -11,7 +11,6 @@ const eventSchema = new mongoose.Schema({
   },
   date: {
     type: Date,
-    default: Date.now(),
     required: true
   },
   canceled: {
@@ -48,13 +47,33 @@ const eventSchema = new mongoose.Schema({
 });
 
 eventSchema.methods.addDocument = function(title) {
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject) => {
     Document.create({
       'title': title
     }).then((createdDocument) => {
       this.documents.push(createdDocument._id);
-      resolve(createdDocument);
+      this.save().then(() => {
+        resolve(createdDocument);
+      }, reject);
     }, reject);
+  });
+};
+
+eventSchema.methods.deleteDocument = function(document) {
+  return new Promise((resolve, reject) => {
+    const index = Number.parseInt(document);
+    if (isNaN(index) || index < 0 || index >= this.documents.length) {
+      reject(new Error('Invalid index to delete'));
+      return;
+    }
+    this.documents[index].delete().then(() => {
+      const mongoKey = 'documents.' + index;
+      const mongoIndex = {};
+      mongoIndex[mongoKey] = null;
+      mongoose.model('Event').findByIdAndUpdate(this._id, {$set: mongoIndex}).then(resolve, reject);
+    }, function(err) {
+      reject(err);
+    });
   });
 };
 

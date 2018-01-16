@@ -28,7 +28,7 @@ const actionSchema = new mongoose.Schema({
 
 actionSchema.path('type').validate({
   validator: function(type) {
-    return ['college', 'department', 'document', 'group', 'program', 'review', 'review', 'user'].includes(type);
+    return ['college', 'department', 'document', 'event', 'group', 'program', 'review', 'review', 'user'].includes(type);
   },
   isAsync: false,
   message: 'Action must have a valid type, see list of action types'

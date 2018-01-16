@@ -55,6 +55,7 @@ router.route('/document/:document_id')
       });
     })
     .delete(access.allowGroups(['Administrators']), function(req, res, next) {
+      winston.warn('The DELETE /document/:document_id route is deprecated: use event, review, or template specific endpoints instead');
       Document.findById(req.params.document_id).then(function(document) {
         if (document === null) {
           next();
