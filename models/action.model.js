@@ -36,7 +36,9 @@ actionSchema.path('type').validate({
 
 actionSchema.methods.excludeFieldsFromUsers = function() {
   const excluded = this.toObject();
-  excluded.user = this.user.excludeFields();
+  if (this.user) {
+    excluded.user = this.user.excludeFields();
+  }
   return excluded;
 };
 
