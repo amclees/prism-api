@@ -86,6 +86,9 @@ function recalculateDates() {
 
     node.startDate = prerequisiteFinishDate;
     node.finishDate = offsetDate(prerequisiteFinishDate, node.completionEstimate);
+    if (node.finishDate < new Date()) {
+      node.finishDate = delayedFinishDate(node);
+    }
     node.recalculated = true;
   };
 
@@ -98,6 +101,11 @@ function offsetDate(date, days) {
   const dateToAdjust = new Date(date.getTime());
   dateToAdjust.setDate(dateToAdjust.getDate() + days);
   return dateToAdjust;
+}
+
+function delayedFinishDate() {
+  // 86400000 ms is one day
+  return new Date((new Date()).getTime() + 86400000);
 }
 
 function nodeValidator(nodes) {
