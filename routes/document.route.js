@@ -31,50 +31,23 @@ const upload =
       }
     }).single('file');
 
+const allowDocumentGroups = access.allowDatabaseGroups('Document', 'document_id', 'groups');
+
 router.route('/document/:document_id')
-    .get(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
-      Document.findById(req.params.document_id).then(function(document) {
-        res.json(document.excludeFields());
-      }, function(err) {
-        next(err);
-      });
+    .get(allowDocumentGroups, function(req, res) {
+      res.json(res.document.excludeFields());
     })
-    .patch(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
+    .patch(allowDocumentGroups, function(req, res, next) {
       for (let property of _.keys(req.body)) {
         if (property !== 'title' && property !== 'completionEstimate') {
           res.sendStatus(400);
           return;
         }
       }
-      Document.findByIdAndUpdate(req.params.document_id, {$set: req.body}, {new: true, runValidators: true}).then(function(updatedDocument) {
-        res.json(updatedDocument.excludeFields());
+      Document.findByIdAndUpdate(req.params.document_id, {$set: req.body}, {new: true, runValidators: true}).then(function(document) {
+        res.json(document.excludeFields());
         winston.info(`Updated document with id ${req.params.document_id}`);
-        actionLogger.log(`renamed document to ${updatedDocument.title}`, req.user, 'document', updatedDocument._id);
-      }, function(err) {
-        next(err);
-      });
-    })
-    .delete(access.allowGroups(['Administrators']), function(req, res, next) {
-      winston.warn('The DELETE /document/:document_id route is deprecated: use event, review, or template specific endpoints instead');
-      Document.findById(req.params.document_id).then(function(document) {
-        if (document === null) {
-          next();
-          return;
-        }
-        if (document.coreTemplate) {
-          res.sendStatus(400);
-          return;
-        }
-        document.remove().then(function(removedDocument) {
-          res.sendStatus(204);
-          const revisionFilenames = _.map(removedDocument.versions, (version) => {
-            return version.filename;
-          });
-          winston.info(`Deleted document with id ${req.params.document_id}. Its revision files are [${revisionFilenames.join(', ')}]`);
-          actionLogger.log(`deleted document ${removedDocument.title}`, req.user, 'document', removedDocument._id);
-        }, function(err) {
-          next(err);
-        });
+        actionLogger.log(`renamed document to ${document.title}`, req.user, 'document', document._id);
       }, function(err) {
         next(err);
       });
@@ -97,75 +70,63 @@ router.route('/document/:document_id/comment/:comment_id');
 router.route('/document/:document_id/comment');
 
 router.route('/document/:document_id/revision/:revision/file')
-    .all(access.allowGroups(['Administrators', 'Program Review Subcommittee']))
+    .all(allowDocumentGroups)
     .get(function(req, res, next) {
-      Document.findById(req.params.document_id).then(function(document) {
-        if (document === null || !document.validRevision(req.params.revision) || document.revisions[req.params.revision].filename === null) {
-          next();
-          return;
-        }
+      const document = req.document;
+      if (document === null || !document.validRevision(req.params.revision) || document.revisions[req.params.revision].filename === null) {
+        next();
+        return;
+      }
 
-        const filename = `${document.title}_revision_${Number.parseInt(req.params.revision) + 1}_${document.revisions[req.params.revision].uploader.username}${document.revisions[req.params.revision].fileExtension}`;
-        res.set('Content-Disposition', `attachment; filename="${filename}"`);
-        const options = {
-          root: process.env.FILE_DIR
-        };
-        res.sendFile(document.revisions[req.params.revision].filename, options);
-      }, function(err) {
-        next(err);
-        winston.info(`Failed to find document with id ${req.params.document_id} for revision deletion`);
-      });
+      const filename = `${document.title}_revision_${Number.parseInt(req.params.revision) + 1}_${document.revisions[req.params.revision].uploader.username}${document.revisions[req.params.revision].fileExtension}`;
+      res.set('Content-Disposition', `attachment; filename="${filename}"`);
+      const options = {
+        root: process.env.FILE_DIR
+      };
+      res.sendFile(document.revisions[req.params.revision].filename, options);
     })
     .post(function(req, res, next) {
-      Document.findById(req.params.document_id).then(function(document) {
-        if (document === null || !document.validRevision(req.params.revision)) {
-          next();
-          return;
-        }
-        if (document.revisions[req.params.revision].filename !== null) {
-          const err = new Error('Revision file must be null for a new file to be uploaded');
-          err.status = 400;
-          next(err);
-          return;
-        }
-        if (document.revisions[req.params.revision].uploader !== req.user._id) {
-          winston.warn('Non-uploader attempted to upload to a revision before the uploader');
-          res.sendStatus(403);
-          return;
-        }
-        upload(req, res, function(multerError) {
-          if (multerError) {
-            next(multerError);
-            return;
-          }
-          document.revisions[req.params.revision].filename = req.file.filename;
-          document.revisions[req.params.revision].fileExtension = path.extname(req.file.originalname).toLowerCase();
-          document.save().then(function() {
-            res.sendStatus(200);
-          }, function(err) {
-            next(err);
-            winston.error('Error saving document after file upload', err);
-          });
-        });
-      }, function(err) {
+      const document = req.document;
+      if (document === null || !document.validRevision(req.params.revision)) {
+        next();
+        return;
+      }
+      if (document.revisions[req.params.revision].filename !== null) {
+        const err = new Error('Revision file must be null for a new file to be uploaded');
+        err.status = 400;
         next(err);
-        winston.info(`Failed to find document with id ${req.params.document_id} for revision file upload`);
+        return;
+      }
+      if (document.revisions[req.params.revision].uploader !== req.user._id) {
+        winston.warn('Non-uploader attempted to upload to a revision before the uploader');
+        res.sendStatus(403);
+        return;
+      }
+      upload(req, res, function(multerError) {
+        if (multerError) {
+          next(multerError);
+          return;
+        }
+        document.revisions[req.params.revision].filename = req.file.filename;
+        document.revisions[req.params.revision].fileExtension = path.extname(req.file.originalname).toLowerCase();
+        document.save().then(function() {
+          res.sendStatus(200);
+        }, function(err) {
+          next(err);
+          winston.error('Error saving document after file upload', err);
+        });
       });
     });
 
-router.route('/document/:document_id/revision/:revision').delete(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
-  Document.findById(req.params.document_id).then(function(document) {
-    document.setDeleted(req.params.revision, true).then(function() {
-      res.sendStatus(204);
-      winston.info(`Deleted revision ${req.params.revision} on document ${req.params.document_id}`);
-      actionLogger.log(`deleted revision ${req.params.revision} on document ${req.params.document_id}`, req.user, 'document', document._id);
-    }, function(err) {
-      next(err);
-      winston.info(`Error deleting revision ${req.params.revision} on document ${req.params.document_id}`);
-    });
+router.route('/document/:document_id/revision/:revision').delete(allowDocumentGroups, function(req, res, next) {
+  const document = req.document;
+  document.setDeleted(req.params.revision, true).then(function() {
+    res.sendStatus(204);
+    winston.info(`Deleted revision ${req.params.revision} on document ${req.params.document_id}`);
+    actionLogger.log(`deleted revision ${req.params.revision} on document ${req.params.document_id}`, req.user, 'document', document._id);
   }, function(err) {
     next(err);
-    winston.info(`Failed to find document with id ${req.params.document_id} for revision deletion`);
+    winston.info(`Error deleting revision ${req.params.revision} on document ${req.params.document_id}`);
   });
 });
 
@@ -185,7 +146,7 @@ router.route('/document/:document_id/revision/:revision/restore').post(access.al
   });
 });
 
-router.route('/document/:document_id/revision', access.allowGroups(['Administrators', 'Program Review Subcommittee'])).post(function(req, res, next) {
+router.route('/document/:document_id/revision', allowDocumentGroups).post(function(req, res, next) {
   let revertIndex;
   if (req.body.revert !== undefined) {
     revertIndex = Number.parseInt(req.body.revert);
@@ -195,34 +156,30 @@ router.route('/document/:document_id/revision', access.allowGroups(['Administrat
       return;
     }
   }
-  Document.findById(req.params.document_id).then(function(document) {
-    try {
-      if (revertIndex !== undefined) {
-        if (!document.validRevision(revertIndex)) {
-          res.sendStatus(400);
-          winston.info('Invalid revert index specified when creating a revert revision');
-          return;
-        }
-        document.addRevision(`Revert to revision: '${document.revisions[revertIndex].message}'`, req.user);
-        document.revisions[document.revisions.length - 1].filename = document.revisions[revertIndex].filename;
-        document.revisions[document.revisions.length - 1].fileExtension = document.revisions[revertIndex].fileExtension;
-      } else {
-        document.addRevision(req.body.message, req.user);
+  const document = req.document;
+  try {
+    if (revertIndex !== undefined) {
+      if (!document.validRevision(revertIndex)) {
+        res.sendStatus(400);
+        winston.info('Invalid revert index specified when creating a revert revision');
+        return;
       }
-    } catch (err) {
-      winston.error('err', err);
+      document.addRevision(`Revert to revision: '${document.revisions[revertIndex].message}'`, req.user);
+      document.revisions[document.revisions.length - 1].filename = document.revisions[revertIndex].filename;
+      document.revisions[document.revisions.length - 1].fileExtension = document.revisions[revertIndex].fileExtension;
+    } else {
+      document.addRevision(req.body.message, req.user);
     }
-    document.save().then(function() {
-      res.sendStatus(201);
-      winston.info(`Created revision on document ${req.params.document_id}`);
-      actionLogger.log(`Created a revision "${document.revisions[document.revisions.length - 1].message}" on document ${req.params.document_id}`, req.user, 'document', document._id);
-    }, function(err) {
-      next(err);
-      winston.info(`Error deleting revision ${req.params.revision} on document ${req.params.document_id}`);
-    });
+  } catch (err) {
+    winston.error('err', err);
+  }
+  document.save().then(function() {
+    res.sendStatus(201);
+    winston.info(`Created revision on document ${req.params.document_id}`);
+    actionLogger.log(`Created a revision "${document.revisions[document.revisions.length - 1].message}" on document ${req.params.document_id}`, req.user, 'document', document._id);
   }, function(err) {
     next(err);
-    winston.info(`Failed to find document with id ${req.params.document_id} for revision creation`);
+    winston.info(`Error deleting revision ${req.params.revision} on document ${req.params.document_id}`);
   });
 });
 

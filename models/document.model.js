@@ -69,8 +69,13 @@ const documentSchema = new mongoose.Schema({
   // Flag set on core templates (templates tied to the base Stage)
   coreTemplate: Boolean,
   // Estimated days to complete document (used in templates only)
-  completionEstimate: Number
-}, {usePushEach: true});
+  completionEstimate: Number,
+  groups: {
+    type: [String],
+    default: ['Administrators']
+  }
+},
+                                           {usePushEach: true});
 
 documentSchema.methods.delete = function() {
   return new Promise((resolve, reject) => {
