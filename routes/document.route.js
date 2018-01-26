@@ -116,7 +116,7 @@ router.route('/document/:document_id/revision/:revision/file')
         winston.info(`Failed to find document with id ${req.params.document_id} for revision deletion`);
       });
     })
-    .post(function(req, res, next) {
+    .put(function(req, res, next) {
       Document.findById(req.params.document_id).then(function(document) {
         if (document === null || !document.validRevision(req.params.revision)) {
           next();
