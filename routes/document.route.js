@@ -35,7 +35,7 @@ const allowDocumentGroups = access.allowDatabaseGroups('Document', 'document_id'
 
 router.route('/document/:document_id')
     .get(allowDocumentGroups, function(req, res) {
-      res.json(res.document.excludeFields());
+      res.json(req.document.excludeFields());
     })
     .patch(allowDocumentGroups, function(req, res, next) {
       for (let property of _.keys(req.body)) {
@@ -146,7 +146,7 @@ router.route('/document/:document_id/revision/:revision/restore').post(access.al
   });
 });
 
-router.route('/document/:document_id/revision', allowDocumentGroups).post(function(req, res, next) {
+router.post('/document/:document_id/revision', allowDocumentGroups, function(req, res, next) {
   let revertIndex;
   if (req.body.revert !== undefined) {
     revertIndex = Number.parseInt(req.body.revert);

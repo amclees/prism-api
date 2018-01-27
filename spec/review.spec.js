@@ -18,13 +18,13 @@ describe('The review model', () => {
     let testId;
     let id1, id2, id3;
     const node1 = {
-      startDate: new Date('2018-01-01'),
+      startDate: new Date('2018-02-01'),
       completionEstimate: 8,
       prerequisites: []
     };
     id1 = mongoose.Types.ObjectId();
     const node2 = {
-      startDate: new Date('2018-01-01'),
+      startDate: new Date('2018-02-01'),
       completionEstimate: 15,
       prerequisites: []
     };
@@ -47,9 +47,9 @@ describe('The review model', () => {
         .then((saved) => {
           testId = saved._id;
           Review.findById(testId).then((testReview) => {
-            expect(testReview.nodes[id1].finishDate).toEqual(new Date('2018-01-09'));
-            expect(testReview.nodes[id2].finishDate).toEqual(new Date('2018-01-16'));
-            expect(testReview.nodes[id3].finishDate).toEqual(new Date('2018-01-28'));
+            expect(testReview.nodes[id1].finishDate).toEqual(new Date('2018-02-09'));
+            expect(testReview.nodes[id2].finishDate).toEqual(new Date('2018-02-16'));
+            expect(testReview.nodes[id3].finishDate).toEqual(new Date('2018-02-28'));
             done();
           });
         });
@@ -58,14 +58,14 @@ describe('The review model', () => {
   it('does not allow invalid values in fields of nodes', (done) => {
     let id1, id2, id3;
     const node1 = {
-      startDate: new Date('2018-01-01'),
+      startDate: new Date('2018-02-01'),
       completionEstimate: 8,
       // Invalid field
       prerequisites: ['e']
     };
     id1 = mongoose.Types.ObjectId();
     const node2 = {
-      startDate: new Date('2018-01-01'),
+      startDate: new Date('2018-02-01'),
       completionEstimate: 15,
       prerequisites: []
     };
@@ -94,14 +94,14 @@ describe('The review model', () => {
   it('does not allow invalid fields in nodes', (done) => {
     let id1, id2, id3;
     const node1 = {
-      startDate: new Date('2018-01-01'),
+      startDate: new Date('2018-02-01'),
       completionEstimate: 8,
       prerequisites: [],
       fakeField: 'This is not a real field'
     };
     id1 = mongoose.Types.ObjectId();
     const node2 = {
-      startDate: new Date('2018-01-01'),
+      startDate: new Date('2018-02-01'),
       completionEstimate: 15,
       prerequisites: []
     };
@@ -133,7 +133,7 @@ describe('The review model', () => {
 
     for (let i = 0; i < 10000; i++) {
       const node = {
-        startDate: new Date('2018-01-01'),
+        startDate: new Date('2018-02-01'),
         completionEstimate: 8,
         prerequisites: [],
       };
