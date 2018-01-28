@@ -133,6 +133,22 @@ router.route('/group/:group_id/member/:member_id')
       });
     });
 
+router.get('/prs', function(req, res, next) {
+  Group.findOne({name: 'Program Review Subcommittee'}).populate('members').exec().then(function(group) {
+    if (group === null) {
+      winston.error('PRS group does not exist');
+      return;
+    }
+    for (let i = 0; i < group.members.length; i++) {
+      group.members[i] = group.members[i].excludeFields();
+    }
+    res.json(group);
+  }, function(err) {
+    next(err);
+    winston.error('Error fetching PRS:', err);
+  });
+});
+
 router.get('/groups', access.allowGroups(['Administrators']), function(req, res, next) {
   Group.find().exec().then(function(groups) {
     res.json(groups);
