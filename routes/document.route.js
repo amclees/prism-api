@@ -45,6 +45,10 @@ router.route('/document/:document_id')
         }
       }
       Document.findByIdAndUpdate(req.params.document_id, {$set: req.body}, {new: true, runValidators: true}).then(function(document) {
+        if (document.locked) {
+          res.sendStatus(403);
+          return;
+        }
         res.json(document.excludeFields());
         winston.info(`Updated document with id ${req.params.document_id}`);
         actionLogger.log(`renamed document to ${document.title}`, req.user, 'document', document._id);
@@ -91,6 +95,10 @@ router.route('/document/:document_id/revision/:revision/file')
         next();
         return;
       }
+      if (document.locked) {
+        res.sendStatus(403);
+        return;
+      }
       if (document.revisions[req.params.revision].filename !== null) {
         const err = new Error('Revision file must be null for a new file to be uploaded');
         err.status = 400;
@@ -120,6 +128,10 @@ router.route('/document/:document_id/revision/:revision/file')
 
 router.route('/document/:document_id/revision/:revision').delete(allowDocumentGroups, function(req, res, next) {
   const document = req.document;
+  if (document.locked) {
+    res.sendStatus(403);
+    return;
+  }
   document.setDeleted(req.params.revision, true).then(function() {
     res.sendStatus(204);
     winston.info(`Deleted revision ${req.params.revision} on document ${req.params.document_id}`);
@@ -132,6 +144,10 @@ router.route('/document/:document_id/revision/:revision').delete(allowDocumentGr
 
 router.route('/document/:document_id/revision/:revision/restore').post(access.allowGroups(['Administrators']), function(req, res, next) {
   Document.findById(req.params.document_id).then(function(document) {
+    if (document.locked) {
+      res.sendStatus(403);
+      return;
+    }
     document.setDeleted(req.params.revision, undefined).then(function() {
       res.sendStatus(200);
       winston.info(`Restored revision ${req.params.revision} on document ${req.params.document_id}`);
@@ -157,6 +173,10 @@ router.post('/document/:document_id/revision', allowDocumentGroups, function(req
     }
   }
   const document = req.document;
+  if (document.locked) {
+    res.sendStatus(403);
+    return;
+  }
   try {
     if (revertIndex !== undefined) {
       if (!document.validRevision(revertIndex)) {
