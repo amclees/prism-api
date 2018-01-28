@@ -14,7 +14,7 @@ const actionLogger = require('../lib/action_logger');
 router.route('/review/:review_id')
     .get(function(req, res, next) {
       Review.findById(req.params.review_id).then(function(review) {
-        if (review === null) {
+        if (review === null || review.deleted) {
           next();
           return;
         }
@@ -31,7 +31,7 @@ router.route('/review/:review_id')
         }
       }
       Review.findByIdAndUpdate(req.params.review_id, {$set: req.body}, {new: true, runValidators: true}).then(function(review) {
-        if (review === null) {
+        if (review === null || review.deleted) {
           next();
           return;
         }
@@ -53,9 +53,20 @@ router.route('/review/:review_id')
       }, next);
     });
 
+router.post('/review/:review_id/restore', function(req, res, next) {
+  Review.findByIdAndUpdate(req.params.review_id, {deleted: false}).then(function(review) {
+    if (review === null) {
+      res.sendStatus(404);
+    } else {
+      res.sendStatus(204);
+      winston.info(`Restored review with id ${req.params.review_id}`);
+    }
+  }, next);
+});
+
 router.route('/review').post(function(req, res, next) {
   reviewFactory.getReview(req.body).then(function(newReview) {
-    console.log(newReview.toObject());
+    newReview.recalculateDates();
     newReview.save().then(function() {
       res.status(201);
       res.json(newReview);
