@@ -50,10 +50,14 @@ reviewSchema.path('nodes').validate({
 });
 
 reviewSchema.post('init', recalculateDates);
+reviewSchema.methods.recalculateDates = recalculateDates;
 
 module.exports = mongoose.model('Review', reviewSchema);
 
 function recalculateDates() {
+  if (!this.endNodes || !this.nodes) {
+    return;
+  }
   winston.debug('Calculating dates for Review');
   let safety = 1000;
   const fillNodeDate = (nodeId) => {
@@ -69,18 +73,14 @@ function recalculateDates() {
       return;
     }
 
-    let prerequisiteFinishDate = new Date(0);
-    if (node.prerequisites.length === 0) {
-      prerequisiteFinishDate = new Date(node.startDate);
-    } else {
-      for (let prerequisiteId of node.prerequisites) {
-        const prerequisite = this.nodes[prerequisiteId];
-        if (!prerequisite.recalculated) {
-          fillNodeDate(prerequisiteId);
-        }
-        if (prerequisite.finishDate > prerequisiteFinishDate) {
-          prerequisiteFinishDate = prerequisite.finishDate;
-        }
+    let prerequisiteFinishDate = node.startDate ? new Date(node.startDate) : new Date();
+    for (let prerequisiteId of node.prerequisites) {
+      const prerequisite = this.nodes[prerequisiteId];
+      if (!prerequisite.recalculated) {
+        fillNodeDate(prerequisiteId);
+      }
+      if (prerequisite.finishDate > prerequisiteFinishDate) {
+        prerequisiteFinishDate = prerequisite.finishDate;
       }
     }
 
@@ -94,6 +94,10 @@ function recalculateDates() {
 
   for (let endNode of this.endNodes) {
     fillNodeDate(endNode);
+  }
+
+  for (let node of _.values(this.nodes)) {
+    node.recalculated = undefined;
   }
 }
 
@@ -113,16 +117,17 @@ function nodeValidator(nodes) {
 }
 
 function validNode(node) {
-  winston.info('validating node', node);
+  winston.debug('validating node', node);
   let valid = 'nan';
   try {
     valid = _.size(_.keys(node)) <= _.size(_.keys(nodeType)) && _.every(_.keys(node), function(key) {
+      if (key === 'recalculated') return true;
       return _.has(nodeType, key) && validValue(key, node[key]);
     });
   } catch (err) {
     winston.error(err);
   }
-  winston.info('the node is valid:', valid);
+  winston.debug('the node is valid:', valid);
   return valid;
 }
 
