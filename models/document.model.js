@@ -115,5 +115,29 @@ documentSchema.methods.excludeFields = function() {
   });
   return object;
 };
+documentSchema.methods.validComment = function(index, allowDeleted = false) {
+  return index >= 0 && index < this.comments.length && (allowDeleted || !this.comments[index].deleted);
+};
 
+documentSchema.methods.deleteComment = function(toDelete, deleted) {
+  const commentIndex = Number.parseInt(toDelete);
+  return new Promise((resolve, reject) => {
+    if (isNaN(commentIndex)) {
+      reject(new Error('Index must be a number'));
+      return;
+    }
+    if (deleted !== undefined && !this.validComment(commentIndex)) {
+      reject(new Error('Invalid comment index'));
+      return;
+    }
+
+    this.comments[commentIndex].deleted = deleted;
+    this.save().then(() => {
+      resolve();
+      winston.info(`Successfully set deleted for comment ${commentIndex} on document with id ${this._id.toString()}`);
+    }, function(err) {
+      reject(err);
+    });
+  });
+};
 module.exports = mongoose.model('Document', documentSchema);
