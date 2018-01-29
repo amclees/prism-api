@@ -4,8 +4,10 @@ const express = require('express');
 const router = express.Router();
 
 const mongoose = require('mongoose');
+const Document = mongoose.model('Document');
 const Review = mongoose.model('Review');
 
+const documentFactory = require('../lib/document_factory');
 const reviewFactory = require('../lib/review_factory');
 
 const access = require('../lib/access');
@@ -76,6 +78,106 @@ router.route('/review').post(function(req, res, next) {
   }, function(err) {
     next(err);
     winston.info('Failed to create review with body:', req.body);
+  });
+});
+
+router.post('/review/:review_id/node/:node_id/finalize', function(req, res, next) {
+  Review.findById(req.params.review_id).then(function(review) {
+    if (review === null || review.deleted || !review.nodes[req.params.node_id]) {
+      next();
+      return;
+    }
+    if (review.nodes[req.params.node_id].finalized) {
+      res.sendStatus(400);
+      return;
+    }
+    Document.findByIdAndUpdate(review.nodes[req.params.node_id].document, {locked: true}).then(function(lockedDocument) {
+      if (lockedDocument === null) {
+        next(new Error(`Invalid document id ${review.nodes[req.params.node_id].document} on review ${review._id}`));
+        return;
+      }
+      review.nodes[req.params.node_id] = true;
+      review.recalculateDates();
+      review.markModified('nodes');
+      review.save().then(function() {
+        res.json(review);
+      }, next);
+    }, next);
+  }, function(err) {
+    next(err);
+  });
+});
+
+router.patch('/review/:review_id/node/:node_id', function(req, res, next) {
+  if (_.keys(req.body).length !== 1 || !(req.body.finishDate || req.body.finishDate === null)) {
+    res.sendStatus(400);
+    return;
+  }
+  Review.findById(req.params.review_id).then(function(review) {
+    if (review === null || review.deleted || !review.nodes[req.params.node_id]) {
+      next();
+      return;
+    }
+    if (review.nodes[req.params.node_id].finalized) {
+      res.sendStatus(400);
+      return;
+    }
+
+    if (req.body.finishDate === null) {
+      review.nodes[req.params.node_id].finishDate = null;
+      review.nodes[req.params.node_id].finishDateOverriden = false;
+    } else {
+      review.nodes[req.params.node_id].finishDate = new Date(req.body.finishDate);
+      review.nodes[req.params.node_id].finishDateOverriden = true;
+    }
+
+    review.recalculateDates();
+    review.markModified('nodes');
+
+    review.save().then(function() {
+      res.json(review);
+    }, next);
+  }, function(err) {
+    next(err);
+  });
+});
+
+router.post('/review/:review_id/node', function(req, res, next) {
+  Review.findById(req.params.review_id).then(function(review) {
+    if (review === null || review.deleted) {
+      next();
+      return;
+    }
+
+    if (req.body.template) {
+      documentFactory.getDocumentFromTemplate(req.body.template).then(function(document) {
+        document.save().then(afterSaveHandler, next);
+      }, next);
+    } else {
+      (new Document({
+        'title': req.body.title,
+        'groups': req.body.groups
+      })).save()
+          .then(afterSaveHandler, next);
+    }
+
+    function afterSaveHandler(document) {
+      const newNodeId = mongoose.Types.ObjectId();
+      review.endNodes.push(newNodeId);
+      review.nodes[newNodeId] = {
+        'document': document._id,
+        'completionEstimate': document.completionEstimate || req.body.completionEstimate,
+        'prerequisites': []
+      };
+      review.recalculateDates();
+      review.markModified('nodes');
+
+      review.save().then(function(savedReview) {
+        res.json(savedReview);
+      }, next);
+    }
+  }, function(err) {
+    next(err);
   });
 });
 
