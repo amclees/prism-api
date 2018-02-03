@@ -6,7 +6,7 @@ const _ = require('lodash');
 
 const reviewDateEstimation = require('../lib/review_date_estimation');
 
-const nodeType = require('../lib/node');
+const nodeType = require('../lib/review_node');
 
 const reviewSchema = new mongoose.Schema({
   program: {
