@@ -8,6 +8,7 @@ const Event = mongoose.model('Event');
 
 const access = require('../lib/access');
 const actionLogger = require('../lib/action_logger');
+const subscribeMiddlewareFactory = require('../lib/subscribe_middleware_factory');
 
 router.route('/event/:event_id')
     .all(access.allowGroups(['Administrators']))
@@ -133,5 +134,8 @@ router.get('/events', access.allowGroups(['Administrators']), function(req, res,
     winston.error('Error fetching all events:', err);
   });
 });
+
+router.post('/event/:id/subscribe', subscribeMiddlewareFactory.getSubscribeMiddleware('Event', true));
+router.post('/event/:id/unsubscribe', subscribeMiddlewareFactory.getSubscribeMiddleware('Event', false));
 
 module.exports = router;
