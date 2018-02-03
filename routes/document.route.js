@@ -203,4 +203,47 @@ router.post('/document/:document_id/revision', allowDocumentGroups, function(req
   });
 });
 
+router.route('/document/:document_id/subscribe').post(function(req, res, next) {
+  Document.findById(req.params.document_id).then(function(document) {
+    if (document === null) {
+      next();
+      return;
+    }
+    if (document.locked) {
+      res.sendStatus(403);
+      return;
+    }
+    if (document.subscribers.indexOf(req.user._id) === -1) {
+      document.subscribers.push(req.user._id);
+      document.save().then(function() {
+        res.sendStatus(204);
+      }, next);
+    } else {
+      res.sendStatus(400);
+    }
+  }, next);
+});
+
+router.route('/document/:document_id/unsubscribe').post(function(req, res, next) {
+  Document.findById(req.params.document_id).then(function(document) {
+    if (document === null) {
+      next();
+      return;
+    }
+    if (document.locked) {
+      res.sendStatus(403);
+      return;
+    }
+    const index = document.subscribers.indexOf(req.user._id);
+    if (index !== -1) {
+      document.subscribers.splice(index, 1);
+      document.save().then(function() {
+        res.sendStatus(204);
+      }, next);
+    } else {
+      res.sendStatus(400);
+    }
+  }, next);
+});
+
 module.exports = router;
