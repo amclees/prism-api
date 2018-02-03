@@ -9,22 +9,22 @@ const mongoose = require('mongoose');
 mongoose.Promise = Promise;
 mongoose.connect(process.env.DB_HOST, {useMongoClient: true});
 
-const Stage = require('../models/stage.model');
+const Review = require('../models/review.model');
 
-describe('The stage model', () => {
-  const nodesErrorMessage = 'Stage validation failed: nodes: Invalid nodes in Stage';
+describe('The review model', () => {
+  const nodesErrorMessage = 'Review validation failed: nodes: Invalid nodes in Review';
 
   it('calculates future estimated dates properly', (done) => {
     let testId;
     let id1, id2, id3;
     const node1 = {
-      startDate: new Date('2018-01-01'),
+      startDate: new Date('2018-02-01'),
       completionEstimate: 8,
       prerequisites: []
     };
     id1 = mongoose.Types.ObjectId();
     const node2 = {
-      startDate: new Date('2018-01-01'),
+      startDate: new Date('2018-02-01'),
       completionEstimate: 15,
       prerequisites: []
     };
@@ -39,16 +39,17 @@ describe('The stage model', () => {
     nodesObject[id2] = node2;
     nodesObject[id3] = node3;
 
-    new Stage({
+    new Review({
+      program: mongoose.Types.ObjectId(),
       endNodes: [id3],
       nodes: nodesObject
     }).save()
         .then((saved) => {
           testId = saved._id;
-          Stage.findById(testId).then((testStage) => {
-            expect(testStage.nodes[id1].finishDate).toEqual(new Date('2018-01-09'));
-            expect(testStage.nodes[id2].finishDate).toEqual(new Date('2018-01-16'));
-            expect(testStage.nodes[id3].finishDate).toEqual(new Date('2018-01-28'));
+          Review.findById(testId).then((testReview) => {
+            expect(testReview.nodes[id1].finishDate).toEqual(new Date('2018-02-09'));
+            expect(testReview.nodes[id2].finishDate).toEqual(new Date('2018-02-16'));
+            expect(testReview.nodes[id3].finishDate).toEqual(new Date('2018-02-28'));
             done();
           });
         });
@@ -57,14 +58,14 @@ describe('The stage model', () => {
   it('does not allow invalid values in fields of nodes', (done) => {
     let id1, id2, id3;
     const node1 = {
-      startDate: new Date('2018-01-01'),
+      startDate: new Date('2018-02-01'),
       completionEstimate: 8,
       // Invalid field
       prerequisites: ['e']
     };
     id1 = mongoose.Types.ObjectId();
     const node2 = {
-      startDate: new Date('2018-01-01'),
+      startDate: new Date('2018-02-01'),
       completionEstimate: 15,
       prerequisites: []
     };
@@ -79,7 +80,8 @@ describe('The stage model', () => {
     nodesObject[id2] = node2;
     nodesObject[id3] = node3;
 
-    new Stage({
+    new Review({
+      program: mongoose.Types.ObjectId(),
       endNodes: [id3],
       nodes: nodesObject
     }).save()
@@ -92,14 +94,14 @@ describe('The stage model', () => {
   it('does not allow invalid fields in nodes', (done) => {
     let id1, id2, id3;
     const node1 = {
-      startDate: new Date('2018-01-01'),
+      startDate: new Date('2018-02-01'),
       completionEstimate: 8,
       prerequisites: [],
       fakeField: 'This is not a real field'
     };
     id1 = mongoose.Types.ObjectId();
     const node2 = {
-      startDate: new Date('2018-01-01'),
+      startDate: new Date('2018-02-01'),
       completionEstimate: 15,
       prerequisites: []
     };
@@ -114,7 +116,8 @@ describe('The stage model', () => {
     nodesObject[id2] = node2;
     nodesObject[id3] = node3;
 
-    new Stage({
+    new Review({
+      program: mongoose.Types.ObjectId(),
       endNodes: [id3],
       nodes: nodesObject
     }).save()
@@ -130,7 +133,7 @@ describe('The stage model', () => {
 
     for (let i = 0; i < 10000; i++) {
       const node = {
-        startDate: new Date('2018-01-01'),
+        startDate: new Date('2018-02-01'),
         completionEstimate: 8,
         prerequisites: [],
       };
@@ -139,7 +142,8 @@ describe('The stage model', () => {
       nodesObject[id] = node;
     }
 
-    new Stage({
+    new Review({
+      program: mongoose.Types.ObjectId(),
       endNodes: ids,
       nodes: nodesObject
     }).save()
