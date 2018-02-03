@@ -64,13 +64,18 @@ const documentSchema = new mongoose.Schema({
     }],
     default: []
   },
+  subscribers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   // Flag set on templates
   template: Boolean,
   // Flag set on core templates (templates tied to the base Stage)
   coreTemplate: Boolean,
   // Estimated days to complete document (used in templates only)
   completionEstimate: Number
-}, {usePushEach: true});
+},
+                                           {usePushEach: true});
 
 documentSchema.methods.delete = function() {
   return new Promise((resolve, reject) => {

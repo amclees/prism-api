@@ -29,21 +29,10 @@ const eventSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-  notifications: {
-    // Change includes date changes and cancellation
-    change: {
-      type: Boolean,
-      default: true
-    },
-    dayBefore: {
-      type: Boolean,
-      default: true
-    },
-    sameDay: {
-      type: Boolean,
-      default: true
-    }
-  }
+  subscribers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }]
 });
 
 eventSchema.methods.addDocument = function(title) {
