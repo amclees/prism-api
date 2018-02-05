@@ -49,8 +49,13 @@ router.route('/document/:document_id/comment').post(function(req,res,next) {
       'creationDate': Date.now,
       'revision': req.params.revision
     });
+    document.save().then(function(){
+      res.sendSatus(200);
+    });
     winston.info(`Created comment with id ${req.params.document_id}.`);
   }, function(err) {
     next(err);
   });
 });
+
+module.exports = router;

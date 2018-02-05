@@ -7,5 +7,6 @@ module.exports = [
   require('./login.route'),
   require('./program.route'),
   require('./file_manager.route'),
-  require('./test_endpoint')
+  require('./test_endpoint'),
+  require('./resource.route')
 ];
