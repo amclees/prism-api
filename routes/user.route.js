@@ -6,6 +6,8 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const User = mongoose.model('User');
 
+const tokenCache = require('../lib/token_cache');
+
 router.route('/user/:user_id')
     .get(function(req, res, next) {
       User.findById(req.params.user_id).then((user) => {
@@ -27,6 +29,7 @@ router.route('/user/:user_id')
       const update = _.pick(req.body, ['username', 'email', 'name', 'config']);
       User.findByIdAndUpdate(req.params.user_id, {$set: update}, {new: true, runValidators: true}).then(function(updatedUser) {
         res.json(updatedUser.excludeFieldsWithConfig());
+        tokenCache.modifyUser(req.params.user_id);
         winston.info(`Updated user ${updatedUser.username} (id: ${updatedUser._id})`);
       }, function(err) {
         next(err);
@@ -36,6 +39,7 @@ router.route('/user/:user_id')
       User.findByIdAndUpdate(req.params.user_id, {$set: {disabled: true}}, {new: true, runValidators: true}).then(function(disabledUser) {
         if (disabledUser) {
           res.sendStatus(204);
+          tokenCache.modifyUser(req.params.user_id);
           winston.info(`Disabled user ${disabledUser.username} (id: ${disabledUser._id})`);
         } else {
           res.sendStatus(404);
