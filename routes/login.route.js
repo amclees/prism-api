@@ -8,6 +8,8 @@ const jwtSecret = process.env.JWT_SECRET || 'secret';
 const _ = require('lodash');
 const winston = require('winston');
 
+const tokenCache = require('../lib/token_cache');
+
 router.post('/login', function(req, res, next) {
   if (!req.body.username || !req.body.password) {
     res.send({success: false, msg: 'Missing username and/or password'});
@@ -22,6 +24,9 @@ router.post('/login', function(req, res, next) {
     user.comparePassword(req.body.password).then((same) => {
       if (same) {
         Group.find({members: user._id}).then(function(groupsWithUser) {
+          const issueTime = (new Date()).getTime();
+          const token = jwt.sign(_.assign(user.excludeFields(['passwordHash']), {'issued': issueTime}), jwtSecret);
+          tokenCache.issueToken(user._id, token, issueTime);
           res.json({
             'user': user.excludeFieldsWithConfig(),
             'groups': _.map(groupsWithUser, (group) => {
@@ -30,7 +35,7 @@ router.post('/login', function(req, res, next) {
                 '_id': group._id
               };
             }),
-            'token': jwt.sign(user.excludeFields(['passwordHash']), jwtSecret)
+            'token': token
           });
           winston.info(`${user.username} logged in successfully.`);
         }, function(err) {
