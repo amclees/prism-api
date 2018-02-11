@@ -24,7 +24,7 @@ router.route('/group/:group_id')
       });
     })
     .patch(function(req, res, next) {
-      Group.findByIdAndUpdate(req.params.group_id, {$set: req.body}, {runValidators: true}).then(function(oldGroup) {
+      Group.findByIdAndUpdate(req.params.group_id, {$set: {'name': req.body.name}}, {runValidators: true}).then(function(oldGroup) {
         if (oldGroup === null) {
           next();
           return;
@@ -69,62 +69,87 @@ router.route('/group/:group_id/member/:member_id')
     .all(access.allowGroups(['Administrators']))
     .put(function(req, res, next) {
       Group.findById(req.params.group_id).then(function(group) {
-        if (group.members.indexOf(req.params.member_id) !== -1) {
-          res.sendStatus(400);
-          winston.info(`Tried to add already existing member ${req.params.member_id} to group with id ${req.params.group_id}`);
+        if (group === null) {
+          next();
           return;
         }
+        User.findByIdAndUpdate(req.params.member_id).then(function(user) {
+          if (user === null) {
+            next();
+            return;
+          }
+          if (group.members.indexOf(req.params.member_id) !== -1) {
+            res.sendStatus(400);
+            winston.info(`Tried to add already existing member ${req.params.member_id} to group with id ${req.params.group_id}`);
+            return;
+          }
 
-        try {
-          group.members.push(req.params.member_id);
-        } catch (err) {
-          res.sendStatus(400);
-          winston.info(`Tried to add invalid ObjectId '${req.params.member_id}' to group with id ${req.params.group_id}`);
-          return;
-        }
+          try {
+            group.members.push(req.params.member_id);
+          } catch (err) {
+            res.sendStatus(400);
+            winston.info(`Tried to add invalid ObjectId '${req.params.member_id}' to group with id ${req.params.group_id}`);
+            return;
+          }
 
-        group.save().then(function(updatedGroup) {
-          res.json(updatedGroup);
-          winston.info(`Added member ${req.params.member_id} to group with id ${req.params.group_id}`);
-          actionLogger.log(`added member to group ${updatedGroup.name}`, req.user, 'group', updatedGroup._id);
-        }, function(err) {
-          next(err);
-          winston.error(`Failed to add member ${req.params.member_id} to group with id ${req.params.group_id}, error:`, err);
+          user.groups.push(group._id);
+
+          user.save().then(function() {
+            group.save().then(function(updatedGroup) {
+              res.json(updatedGroup);
+              winston.info(`Added member ${req.params.member_id} to group with id ${req.params.group_id}`);
+              actionLogger.log(`added member to group ${updatedGroup.name}`, req.user, 'group', updatedGroup._id);
+            }, next);
+          }, next);
         });
-      }, function(err) {
-        err.status = 404;
-        next(err);
-        winston.info(`Tried to add member ${req.params.member_id} to nonexistent group with id ${req.params.group_id}`);
-      });
+      }, next);
     })
     .delete(function(req, res, next) {
       Group.findById(req.params.group_id).then(function(group) {
-        try {
-          if (group.name === 'Administrators' && req.user._id.equals(mongoose.Types.ObjectId(req.params.member_id))) {
-            const err = new Error('Administrators cannot remove themselves from the administrator group');
-            err.status = 400;
+        if (group === null) {
+          next();
+          return;
+        }
+        User.findByIdAndUpdate(req.params.member_id).then(function(user) {
+          if (user === null) {
+            next();
+            return;
+          }
+
+          try {
+            if (group.name === 'Administrators' && req.user._id.equals(mongoose.Types.ObjectId(req.params.member_id))) {
+              const err = new Error('Administrators cannot remove themselves from the administrator group');
+              err.status = 400;
+              next(err);
+              return;
+            }
+          } catch (err) {
             next(err);
             return;
           }
-        } catch (err) {
-          next(err);
-          winston.error(err);
-          return;
-        }
-        const location = group.members.indexOf(req.params.member_id);
-        if (location === -1) {
-          res.sendStatus(404);
-          winston.info(`Failed to delete nonexistent member ${req.params.member_id} from group with id ${req.params.group_id}`);
-          return;
-        }
-        const removed = group.members.splice(location, 1)[0];
-        group.save().then(function() {
-          res.json(removed);
-          winston.info(`Deleted member ${req.params.member_id} from group with id ${req.params.group_id}`);
-          actionLogger.log(`removed member from group ${group.name}`, req.user, 'group', group._id);
-        }, function(err) {
-          next(err);
-          winston.error(`Failed to delete member ${req.params.member_id} from group with id ${req.params.group_id}, error:`, err);
+          const location = group.members.indexOf(req.params.member_id);
+          const groupLocation = user.groups.indexOf(group._id);
+          if (location === -1 && groupLocation === -1) {
+            res.sendStatus(404);
+            winston.info(`Failed to delete nonexistent member ${req.params.member_id} from group with id ${req.params.group_id}`);
+            return;
+          } else if (location === -1 || groupLocation === -1) {
+            winston.warn(`User and Group membership records were not consistent when removing user with id ${req.params.member_id}`);
+          }
+          if (location !== -1) {
+            group.members.splice(location, 1)[0];
+          }
+          if (groupLocation !== -1) {
+            user.groups.slice(groupLocation, 1)[0];
+          }
+
+          user.save().then(function() {
+            group.save().then(function() {
+              res.sendStatus(204);
+              winston.info(`Deleted member ${req.params.member_id} from group with id ${req.params.group_id}`);
+              actionLogger.log(`removed member from group ${group.name}`, req.user, 'group', group._id);
+            }, next);
+          }, next);
         });
       }, function(err) {
         err.status = 404;
