@@ -140,7 +140,7 @@ router.route('/group/:group_id/member/:member_id')
             group.members.splice(location, 1)[0];
           }
           if (groupLocation !== -1) {
-            user.groups.slice(groupLocation, 1)[0];
+            user.groups.splice(groupLocation, 1)[0];
           }
 
           user.save().then(function() {
