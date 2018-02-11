@@ -23,14 +23,39 @@ router.route('/user/:user_id')
       });
     })
     .patch(function(req, res, next) {
-      // Since only admins will be able to patch other users after access control, checking for disabled is not necessary
-      const update = _.pick(req.body, ['username', 'email', 'name', 'config']);
-      User.findByIdAndUpdate(req.params.user_id, {$set: update}, {new: true, runValidators: true}).then(function(updatedUser) {
-        res.json(updatedUser.excludeFieldsWithConfig());
-        winston.info(`Updated user ${updatedUser.username} (id: ${updatedUser._id})`);
-      }, function(err) {
-        next(err);
-      });
+      if (req.body.password) {
+        if (!req.user._id.equals(mongoose.Types.ObjectId(req.params.user_id))) {
+          res.sendStatus(403);
+          return;
+        }
+        User.findById(req.params.user_id).then(function(user) {
+          user.setPassword(req.body.password).then(function() {
+            const update = _.pick(req.body, ['username', 'email', 'name', 'config']);
+            for (let key of _.keys(update)) {
+              user[key] = update[key];
+            }
+            user.save().then(function() {
+              if (req.user._id.equals(mongoose.Types.ObjectId(req.params.user_id))) {
+                res.json(user.excludeFieldsWithConfig());
+              } else {
+                res.json(user.excludeFields());
+              }
+            }, next);
+          }, next);
+        }, next);
+      } else {
+        // Since only admins will be able to patch other users after access control, checking for disabled is not necessary
+        const update = _.pick(req.body, ['username', 'email', 'name', 'config']);
+
+        User.findByIdAndUpdate(req.params.user_id, {$set: update}, {new: true, runValidators: true}).then(function(updatedUser) {
+          if (updatedUser === null) {
+            next();
+            return;
+          }
+          res.json(updatedUser.excludeFieldsWithConfig());
+          winston.info(`Updated user ${updatedUser.username} (id: ${updatedUser._id})`);
+        }, next);
+      }
     })
     .delete(function(req, res, next) {
       User.findByIdAndUpdate(req.params.user_id, {$set: {disabled: true}}, {new: true, runValidators: true}).then(function(disabledUser) {
@@ -52,15 +77,9 @@ router.post('/user', function(req, res, next) {
       createdUser.save().then(function() {
         winston.info(`User ${createdUser.username} (id: ${createdUser._id}) created.`);
         res.json(createdUser.excludeFields());
-      }, function(err) {
-        next(err);
-      });
-    }, function(err) {
-      next(err);
-    });
-  }, function(err) {
-    next(err);
-  });
+      }, next);
+    }, next);
+  }, next);
 });
 
 router.get('/users', function(req, res, next) {
