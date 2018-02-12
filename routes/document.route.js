@@ -196,7 +196,7 @@ router.post('/document/:document_id/revision', allowDocumentGroups, function(req
   document.save().then(function() {
     res.sendStatus(201);
     winston.info(`Created revision on document ${req.params.document_id}`);
-    actionLogger.log(`Created a revision "${document.revisions[document.revisions.length - 1].message}" on document ${req.params.document_id}`, req.user, 'document', document._id);
+    actionLogger.log(`created a revision "${document.revisions[document.revisions.length - 1].message}" on document ${req.params.document_id}`, req.user, 'document', document._id);
   }, function(err) {
     next(err);
     winston.info(`Error deleting revision ${req.params.revision} on document ${req.params.document_id}`);
