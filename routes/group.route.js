@@ -30,6 +30,7 @@ router.route('/group/:group_id')
           return;
         }
         res.json({
+          '_id': oldGroup._id,
           'name': req.body.name,
           'members': oldGroup.members
         });
