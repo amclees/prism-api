@@ -86,6 +86,7 @@ const upload =
       });
     });
 
+//test resource
     router.route('/resource').post(function(req, res, next) {
       Resource.create(req.body).then(function(newResource) {
         res.status(201);

@@ -24,8 +24,10 @@ const documentSchema = new mongoose.Schema({
         default: Date.now
       },
       uploader: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        type: {
+          _id: {type: mongoose.Schema.Types.ObjectId, required: true},
+          username: {type: String, required: true},
+        },
         required: true
       },
       template: Boolean,
@@ -49,7 +51,7 @@ const documentSchema = new mongoose.Schema({
             last: {type: String, required: true}
           }
         },
-        required: true
+        required: false
       },
       creationDate: {
         type: String,
@@ -57,12 +59,24 @@ const documentSchema = new mongoose.Schema({
       },
       revision: {
         type: Number,
-        required: true
+        required: false
       }
     }],
     default: []
+  },
+  // Flag set on templates
+  template: Boolean,
+  // Flag set on core templates (templates tied to the base Stage)
+  coreTemplate: Boolean,
+  // Estimated days to complete document (used in templates only, only used to instantiate review documents, no updates afterwards affect existing reviews)
+  completionEstimate: Number,
+  locked: Boolean,
+  groups: {
+    type: [String],
+    default: ['Administrators']
   }
-});
+},
+                                           {usePushEach: true});
 
 documentSchema.methods.validRevision = function(index, allowDeleted = false) {
   return index >= 0 && index < this.revisions.length && (allowDeleted || !this.revisions[index].deleted);
@@ -119,25 +133,5 @@ documentSchema.methods.validComment = function(index, allowDeleted = false) {
   return index >= 0 && index < this.comments.length && (allowDeleted || !this.comments[index].deleted);
 };
 
-documentSchema.methods.deleteComment = function(toDelete, deleted) {
-  const commentIndex = Number.parseInt(toDelete);
-  return new Promise((resolve, reject) => {
-    if (isNaN(commentIndex)) {
-      reject(new Error('Index must be a number'));
-      return;
-    }
-    if (deleted !== undefined && !this.validComment(commentIndex)) {
-      reject(new Error('Invalid comment index'));
-      return;
-    }
 
-    this.comments[commentIndex].deleted = deleted;
-    this.save().then(() => {
-      resolve();
-      winston.info(`Successfully set deleted for comment ${commentIndex} on document with id ${this._id.toString()}`);
-    }, function(err) {
-      reject(err);
-    });
-  });
-};
 module.exports = mongoose.model('Document', documentSchema);

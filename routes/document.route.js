@@ -75,8 +75,81 @@ router.route('/document').post(function(req, res, next) {
   });
 });
 
-router.route('/document/:document_id/comment/:comment_id');
-router.route('/document/:document_id/comment');
+router.route('/document/:document_id/comment/:comment_id')
+.patch(function(req, res, next) {
+  Document.findById(req.params.document_id).then(function(document) {
+    let comments_index = Number.parseInt(req.params.comment_id);
+    if (document === null) {
+      next();
+      winston.info('No document with id ${req.params.document_id}');
+      return;
+    }
+    if (isNaN(comments_index)) {
+      next();
+      winston.info('No comment with index');
+      return;
+    }
+    document.comments[comments_index].text = JSON.stringify(req.body);
+    document.save().then(function(){
+      res.sendStatus(200);
+      winston.info(`Updated comment with id ${req.params.comment_id}`);
+    });
+  }, function(err) {
+    next(err);
+    winston.info(`Failed `);
+}, function(err) {
+  next(err);
+  winston.info(`Failed to find`);
+  });
+})
+.delete(function(req, res, next) {
+  Document.findById(req.params.document_id).then(function(document) {
+    let comments_index = Number.parseInt(req.params.comment_id);
+    if (document === null) {
+      next();
+      return;
+    }
+    if (isNaN(comments_index)){
+      next();
+      winston.info('No comment with that index');
+    }
+    document.comments.splice(comments_index, 1);
+    document.save().then(function(){
+      res.sendStatus(200);
+      winston.info(`Deleted comment with id ${req.params.comment_id}`);
+      winston.info(comments_index);
+    });
+  }, function(err) {
+      next(err);
+      winston.info(`Failed `);
+    }, function(err) {
+      next(err);
+      winston.info(`Failed to find`);
+    });
+  });
+
+router.route('/document/:document_id/comment').post(function(req,res,next) {
+  Document.findById(req.params.document_id).then(function(document) {
+    if(document === null ) {
+      next();
+      return;
+    }
+    document.comments.push({
+      'text': JSON.stringify(req.body),
+      'creationDate': Date.now
+    });
+    document.save().then(function(){
+      winston.info(`Created comment with id ${req.params.document_id}.`);
+      res.sendStatus(200);
+    });
+  }, function(err) {
+    next(err);
+    winston.info("Failed");
+}, function(err) {
+  next(err);
+  winston.info(`Failed to find document with ${req.params.document_id} for comment upload`);
+  });
+});
 
 router.route('/document/:document_id/revision/:revision/file')
     .get(function(req, res, next) {
