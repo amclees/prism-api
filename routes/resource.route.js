@@ -27,7 +27,7 @@ const upload =
       }
     }).single('file');
 
-    router.route('/resources/resource_id')
+    router.route('/resource/:resource_id')
     .get(function(req, res, next) {
       Resource.findById(req.params.resource_id).then(function(resource) {
         if(resource === null) {
@@ -40,7 +40,21 @@ const upload =
         winston.info(`Failed to find document with id ${req.params.resource_id}`);
       });
     })
-    .post(function(req, res, next) {
+    .delete(function(req, res, next) {
+      Resource.findByIdAndRemove(req.params.resource_id).then(function(removedResource) {
+        if (removedResource) {
+          res.sendStatus(204);
+          winston.info(`Removed resource with id ${req.params.resource_id}`);
+        } else {
+          res.sendStatus(404);
+          winston.info(`Failed to find and remove resource with id ${req.params.resource_id}`);
+        }
+      }, function(err) {
+        next(err);
+      });
+    });
+
+    router.route('/resources').post(function(req, res, next) {
       Resource.findById(req.params.resource_id).then(function(resource) {
         if (resource === null) {
           next();
@@ -70,21 +84,15 @@ const upload =
         next(err);
         winston.info(`Failed to find document with id ${req.params.resource_id} for resource file upload`);
       });
-    })
-    .delete(function(req, res, next) {
-      Resource.findByIdAndRemove(req.params.resource_id).then(function(removedResource) {
-        if (removedResource) {
-          res.sendStatus(204);
-          winston.info(`Removed resource with id ${req.params.resource_id}`);
-        } else {
-          res.sendStatus(404);
-          winston.info(`Failed to find and remove resource with id ${req.params.resource_id}`);
-        }
-      }, function(err) {
-        next(err);
-      });
     });
 
-
-
+    router.route('/resource').post(function(req, res, next) {
+      Resource.create(req.body).then(function(newResource) {
+        res.status(201);
+        winston.info(`Created resource with id ${newResource._id}`);
+      }, function(err) {
+        next(err);
+        winston.info('Failed to create document with body:', req.body);
+      });
+    });
     module.exports = router;
