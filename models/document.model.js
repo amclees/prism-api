@@ -18,7 +18,7 @@ const documentSchema = new mongoose.Schema({
         required: true
       },
       filename: String,
-      fileExtension: String,
+      originalFilename: String,
       dateUploaded: {
         type: Date,
         default: Date.now

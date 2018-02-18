@@ -82,7 +82,7 @@ router.route('/document/:document_id/revision/:revision/file')
         return;
       }
 
-      const filename = `${document.title}_revision_${Number.parseInt(req.params.revision) + 1}_${document.revisions[req.params.revision].uploader.username}${document.revisions[req.params.revision].fileExtension}`;
+      const filename = `${document.title}_revision_${Number.parseInt(req.params.revision) + 1}_${document.revisions[req.params.revision].uploader.username}${path.extname(document.revisions[req.params.revision].originalFilename)}`;
       res.set('Content-Disposition', `attachment; filename="${filename}"`);
       const options = {
         root: process.env.FILE_DIR
@@ -105,8 +105,8 @@ router.route('/document/:document_id/revision/:revision/file')
         next(err);
         return;
       }
-      if (document.revisions[req.params.revision].uploader !== req.user._id) {
-        winston.warn('Non-uploader attempted to upload to a revision before the uploader');
+      if (!document.revisions[req.params.revision].uploader._id.equals(req.user._id)) {
+        winston.warn(`Non-uploader ${req.user._id} attempted to upload to a revision before the uploader ${document.revisions[req.params.revision].uploader._id}`);
         res.sendStatus(403);
         return;
       }
@@ -116,7 +116,7 @@ router.route('/document/:document_id/revision/:revision/file')
           return;
         }
         document.revisions[req.params.revision].filename = req.file.filename;
-        document.revisions[req.params.revision].fileExtension = path.extname(req.file.originalname).toLowerCase();
+        document.revisions[req.params.revision].originalFilename = req.file.originalname;
         document.save().then(function() {
           res.sendStatus(200);
         }, function(err) {
@@ -196,7 +196,7 @@ router.post('/document/:document_id/revision', allowDocumentGroups, function(req
   document.save().then(function() {
     res.sendStatus(201);
     winston.info(`Created revision on document ${req.params.document_id}`);
-    actionLogger.log(`created a revision "${document.revisions[document.revisions.length - 1].message}" on document ${req.params.document_id}`, req.user, 'document', document._id);
+    actionLogger.log(`created a revision '${document.revisions[document.revisions.length - 1].message}' on document ${req.params.document_id}`, req.user, 'document', document._id);
   }, function(err) {
     next(err);
     winston.info(`Error deleting revision ${req.params.revision} on document ${req.params.document_id}`);
