@@ -17,17 +17,23 @@ router.get('/actions', access.attachGroups, function(req, res, next) {
     query.user = req.query.user;
   }
 
-  const page = req.query.page ? req.query.page : 0;
-  Action.find(query).sort({date: 'desc'}).limit(settings.actionsPerPage).skip(settings.actionsPerPage * page).populate('user').exec().then(function(actions) {
-    const excludedActions = [];
-    for (let action of actions) {
-      excludedActions.push(action.excludeFieldsFromUsers());
-    }
-    res.json(excludedActions);
-  }, function(err) {
-    next(err);
-    winston.error('Error fetching all actions:', err);
-  });
+  if (req.query.count === '1') {
+    Action.count(query).then(function(count) {
+      res.json({'count': count});
+    }, next);
+  } else {
+    const page = req.query.page ? req.query.page : 0;
+    Action.find(query).sort({date: 'desc'}).limit(settings.actionsPerPage).skip(settings.actionsPerPage * page).populate('user').exec().then(function(actions) {
+      const excludedActions = [];
+      for (let action of actions) {
+        excludedActions.push(action.excludeFieldsFromUsers());
+      }
+      res.json(excludedActions);
+    }, function(err) {
+      next(err);
+      winston.error('Error fetching all actions:', err);
+    });
+  }
 });
 
 module.exports = router;
