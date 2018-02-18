@@ -4,7 +4,6 @@ const router = express.Router();
 
 const mongoose = require('mongoose');
 const Group = mongoose.model('Group');
-const User = mongoose.model('User');
 
 const actionLogger = require('../lib/action_logger');
 
