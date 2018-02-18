@@ -35,7 +35,7 @@ router.route('/group/:group_id')
           'members': oldGroup.members
         });
         winston.info(`Updated group with id ${req.params.group_id}`);
-        actionLogger.log(`renamed the group "${oldGroup.name}" to "${req.body.name}"`, req.user, 'group', oldGroup._id);
+        actionLogger.log(`renamed the group "${oldGroup.name}" to`, req.user, 'group', oldGroup._id, req.body.name);
       }, function(err) {
         next(err);
       });
@@ -59,7 +59,7 @@ router.route('/group').post(access.allowGroups(['Administrators']), function(req
     res.status(201);
     res.json(newGroup);
     winston.info(`Created group with id ${newGroup._id}`);
-    actionLogger.log(`created the group "${newGroup.name}"`, req.user, 'group', newGroup._id);
+    actionLogger.log(`created the group`, req.user, 'group', newGroup._id, newGroup.name);
   }, function(err) {
     next(err);
     winston.info('Failed to create group with body:', req.body);
@@ -87,7 +87,7 @@ router.route('/group/:group_id/member/:member_id')
         group.save().then(function(updatedGroup) {
           res.json(updatedGroup);
           winston.info(`Added member ${req.params.member_id} to group with id ${req.params.group_id}`);
-          actionLogger.log(`added member to group ${updatedGroup.name}`, req.user, 'group', updatedGroup._id);
+          actionLogger.log(`added member to group`, req.user, 'group', updatedGroup._id, updatedGroup.name);
         }, function(err) {
           next(err);
           winston.error(`Failed to add member ${req.params.member_id} to group with id ${req.params.group_id}, error:`, err);
@@ -122,7 +122,7 @@ router.route('/group/:group_id/member/:member_id')
         group.save().then(function() {
           res.json(removed);
           winston.info(`Deleted member ${req.params.member_id} from group with id ${req.params.group_id}`);
-          actionLogger.log(`removed member from group ${group.name}`, req.user, 'group', group._id);
+          actionLogger.log(`removed member from group`, req.user, 'group', group._id, group.name);
         }, function(err) {
           next(err);
           winston.error(`Failed to delete member ${req.params.member_id} from group with id ${req.params.group_id}, error:`, err);

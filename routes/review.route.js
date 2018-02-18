@@ -39,7 +39,7 @@ router.route('/review/:review_id')
         }
         res.json(review);
         winston.info(`Updated review with id ${req.params.review_id}`);
-        actionLogger.log('updated a review', req.user, 'review', review._id);
+        actionLogger.log('updated a review', req.user, 'review', review._id, '');
       }, function(err) {
         next(err);
       });

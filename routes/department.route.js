@@ -30,7 +30,7 @@ router.route('/department/:department_id')
         }
         res.json(updatedDepartment);
         winston.info(`Updated department with id ${req.params.department_id}`);
-        actionLogger.log(`updated a department`, req.user, 'department', updatedDepartment._id);
+        actionLogger.log(`updated a department`, req.user, 'department', updatedDepartment._id, updatedDepartment.name);
       }, function(err) {
         next(err);
       });
@@ -63,7 +63,7 @@ router.route('/department').post(access.allowGroups(['Administrators']), functio
     res.status(201);
     res.json(newDepartment);
     winston.info(`Created department with id ${newDepartment._id}`);
-    actionLogger.log(`created a new department, ${newDepartment.name}`, req.user, 'department', newDepartment._id);
+    actionLogger.log(`created a new department`, req.user, 'department', newDepartment._id, newDepartment.name);
   }, function(err) {
     next(err);
     winston.info('Failed to create department with body:', req.body);
