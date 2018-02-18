@@ -29,6 +29,8 @@ const upload =
       }
     }).single('file');
 
+const allowDocumentGroups = access.allowDatabaseGroups('Document', 'document_id', 'groups');
+
 router.route('/document/:document_id')
     .get(function(req, res, next) {
       Document.findById(req.params.document_id).populate('comments').then(function(document) {
@@ -76,7 +78,7 @@ router.route('/document').post(function(req, res, next) {
 });
 
 router.route('/document/:document_id/comment/:comment_id')
-.patch(function(req, res, next) {
+.patch(allowDocumentGroups, function(req, res, next) {
   Document.findById(req.params.document_id).then(function(document) {
     let comments_index = Number.parseInt(req.params.comment_id);
     if (document === null) {
@@ -102,7 +104,7 @@ router.route('/document/:document_id/comment/:comment_id')
   winston.info(`Failed to find`);
   });
 })
-.delete(function(req, res, next) {
+.delete(allowDocumentGroups, function(req, res, next) {
   Document.findById(req.params.document_id).then(function(document) {
     let comments_index = Number.parseInt(req.params.comment_id);
     if (document === null) {
@@ -128,7 +130,7 @@ router.route('/document/:document_id/comment/:comment_id')
     });
   });
 
-router.route('/document/:document_id/comment').post(function(req,res,next) {
+router.route('/document/:document_id/comment').post(allowDocumentGroups, function(req,res,next) {
   Document.findById(req.params.document_id).then(function(document) {
     if(document === null ) {
       next();
@@ -136,7 +138,9 @@ router.route('/document/:document_id/comment').post(function(req,res,next) {
     }
     document.comments.push({
       'text': JSON.stringify(req.body),
-      'creationDate': Date.now
+      'creationDate': Date.now,
+      'author': req.user,
+      'revision': req.body.revision,
     });
     document.save().then(function(){
       winston.info(`Created comment with id ${req.params.document_id}.`);

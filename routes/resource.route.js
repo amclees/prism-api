@@ -8,6 +8,8 @@ const router = express.Router();
 const Resource = mongoose.model('Resource');
 const settings = require('../lib/config/settings');
 
+const access = require('../lib/access');
+
 const upload =
     multer({
       storage: multer.diskStorage({
@@ -28,7 +30,7 @@ const upload =
     }).single('file');
 
     router.route('/resource/:resource_id')
-    .get(function(req, res, next) {
+    .get(access.allowDatabaseGroups('Document', 'document_id', 'groups'), function(req, res, next) {
       Resource.findById(req.params.resource_id).then(function(resource) {
         if(resource === null) {
           next();
@@ -40,7 +42,7 @@ const upload =
         winston.info(`Failed to find document with id ${req.params.resource_id}`);
       });
     })
-    .delete(function(req, res, next) {
+    .delete(access.allowGroups(['Administrators']), function(req, res, next) {
       Resource.findByIdAndRemove(req.params.resource_id).then(function(removedResource) {
         if (removedResource) {
           res.sendStatus(204);
@@ -54,7 +56,7 @@ const upload =
       });
     });
 
-    router.route('/resources').post(function(req, res, next) {
+    router.route('/resources').post(access.allowGroups(['Administrators']), function(req, res, next) {
       Resource.findById(req.params.resource_id).then(function(resource) {
         if (resource === null) {
           next();
