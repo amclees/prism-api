@@ -77,6 +77,8 @@ const documentSchema = new mongoose.Schema({
   }
 },
                                            {usePushEach: true});
+<<<<<<< HEAD
+=======
 
 documentSchema.methods.delete = function() {
   return new Promise((resolve, reject) => {
@@ -91,6 +93,7 @@ documentSchema.methods.delete = function() {
     });
   });
 };
+>>>>>>> upstream/master
 
 documentSchema.methods.validRevision = function(index, allowDeleted = false) {
   return index >= 0 && index < this.revisions.length && (allowDeleted || !this.revisions[index].deleted);
@@ -146,5 +149,9 @@ documentSchema.methods.excludeFields = function() {
   });
   return object;
 };
+documentSchema.methods.validComment = function(index, allowDeleted = false) {
+  return index >= 0 && index < this.comments.length && (allowDeleted || !this.comments[index].deleted);
+};
+
 
 module.exports = mongoose.model('Document', documentSchema);
