@@ -6,7 +6,11 @@ const mongoose = require('mongoose');
 const Program = mongoose.model('Program');
 const Review = mongoose.model('Review');
 
+const access = require('../lib/access');
+const actionLogger = require('../lib/action_logger');
+
 router.route('/program/:program_id')
+    .all(access.allowGroups(['Administrators']))
     .get(function(req, res, next) {
       Program.findById(req.params.program_id).then(function(program) {
         if (program === null) {
@@ -26,6 +30,7 @@ router.route('/program/:program_id')
         }
         res.json(updatedProgram);
         winston.info(`Updated program with id ${req.params.program_id}`);
+        actionLogger.log('updated a program', req.user, 'program', updatedProgram._id, updatedProgram.name);
       }, function(err) {
         next(err);
       });
@@ -53,18 +58,19 @@ router.route('/program/:program_id')
       });
     });
 
-router.route('/program').post(function(req, res, next) {
+router.route('/program').post(access.allowGroups(['Administrators']), function(req, res, next) {
   Program.create(req.body).then(function(newProgram) {
     res.status(201);
     res.json(newProgram);
     winston.info(`Created program with id ${newProgram._id}`);
+    actionLogger.log(`created a new program`, req.user, 'program', newProgram._id, newProgram.name);
   }, function(err) {
     next(err);
     winston.info('Failed to create program with body:', req.body);
   });
 });
 
-router.get('/programs', function(req, res, next) {
+router.get('/programs', access.allowGroups(['Administrators']), function(req, res, next) {
   Program.find().exec().then(function(programs) {
     res.json(programs);
   }, function(err) {

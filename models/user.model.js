@@ -30,6 +30,8 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Flag for 'deleted' account users
+  disabled: Boolean,
   samlType: String,
   passwordHash: String,
   config: {
@@ -45,7 +47,8 @@ const userSchema = new mongoose.Schema({
     },
     default: {}
   }
-});
+},
+                                       {usePushEach: true});
 
 userSchema.index({username: 1});
 
@@ -67,7 +70,7 @@ userSchema.path('email').validate({
   message: 'Email must be a valid email'
 });
 
-const fieldsToExcludeWithConfig = ['email', 'internal', 'root', 'samlType', 'passwordHash'];
+const fieldsToExcludeWithConfig = ['internal', 'root', 'samlType', 'passwordHash'];
 const fieldsToExclude = fieldsToExcludeWithConfig.concat('config');
 userSchema.methods = {
   setPassword: function(passwordPlaintext) {
@@ -91,7 +94,7 @@ userSchema.methods = {
   },
   // Should be used when revealing a User object that is the user making the request
   excludeFieldsWithConfig: function() {
-    this.excludeFields(fieldsToExcludeWithConfig);
+    return this.excludeFields(fieldsToExcludeWithConfig);
   }
 };
 

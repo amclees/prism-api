@@ -18,7 +18,7 @@ const documentSchema = new mongoose.Schema({
         required: true
       },
       filename: String,
-      fileExtension: String,
+      originalFilename: String,
       dateUploaded: {
         type: Date,
         default: Date.now
@@ -77,6 +77,23 @@ const documentSchema = new mongoose.Schema({
   }
 },
                                            {usePushEach: true});
+<<<<<<< HEAD
+=======
+
+documentSchema.methods.delete = function() {
+  return new Promise((resolve, reject) => {
+    this.remove().then(function(removedDocument) {
+      const revisionFilenames = _.map(removedDocument.versions, (version) => {
+        return version.filename;
+      });
+      winston.info(`Deleted document with id ${removedDocument._id}. Its revision files are [${revisionFilenames.join(', ')}]`);
+      resolve(removedDocument);
+    }, function(err) {
+      reject(err);
+    });
+  });
+};
+>>>>>>> upstream/master
 
 documentSchema.methods.validRevision = function(index, allowDeleted = false) {
   return index >= 0 && index < this.revisions.length && (allowDeleted || !this.revisions[index].deleted);
@@ -86,7 +103,10 @@ documentSchema.methods.addRevision = function(message, uploader) {
   this.revisions.push({
     'message': message,
     'filename': null,
-    'uploader': uploader
+    'uploader': {
+      'username': uploader.username,
+      '_id': uploader._id
+    }
   });
 };
 
