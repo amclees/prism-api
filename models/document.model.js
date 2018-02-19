@@ -77,8 +77,6 @@ const documentSchema = new mongoose.Schema({
   }
 },
                                            {usePushEach: true});
-<<<<<<< HEAD
-=======
 
 documentSchema.methods.delete = function() {
   return new Promise((resolve, reject) => {
@@ -93,7 +91,6 @@ documentSchema.methods.delete = function() {
     });
   });
 };
->>>>>>> upstream/master
 
 documentSchema.methods.validRevision = function(index, allowDeleted = false) {
   return index >= 0 && index < this.revisions.length && (allowDeleted || !this.revisions[index].deleted);
