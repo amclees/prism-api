@@ -29,6 +29,22 @@ router.post('/template', access.allowGroups(['Administrators']), function(req, r
       });
 });
 
+router.delete('/template/:template_id', access.allowGroups(['Administrators']), function(req, res, next) {
+  Document.findById(req.params.template_id).then(function(toRemove) {
+    if (toRemove === null) {
+      res.sendStatus(404);
+      return;
+    }
+    if (!toRemove.template || toRemove.coreTemplate) {
+      res.sendStatus(400);
+      return;
+    }
+    toRemove.remove().then(function() {
+      res.sendStatus(204);
+    }, next);
+  }, next);
+});
+
 router.get('/templates', access.allowGroups(['Administrators']), function(req, res, next) {
   Document.find({template: true}).exec().then(function(templates) {
     const excludedTemplates = [];
