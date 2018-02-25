@@ -3,6 +3,8 @@ global.Promise = require('bluebird');
 require('dotenv').config();
 const mongoose = require('mongoose');
 
+const _ = require('lodash');
+
 module.exports = function() {
   return new Promise(function(resolve, reject) {
     const db = require('../db');
@@ -11,19 +13,21 @@ module.exports = function() {
     Promise.all(mongoose.modelNames().map(modelName => mongoose.model(modelName).remove({}))).then(function() {
       const userFactory = require('../lib/user_factory');
 
-      createGroups(['Administrators', 'Program Review Subcommittee']).then(function() {
-        userFactory.getUser({
-                     username: 'root',
-                     password: 'password',
-                     email: 'root@prism.calstatela.edu',
-                     name: {
-                       first: 'Root',
-                       last: 'User'
-                     },
-                     internal: true,
-                     root: true
-                   })
-            .then(resolve, reject);
+      createCoreTemplates().then(function() {
+        createGroups(['Administrators', 'Program Review Subcommittee']).then(function() {
+          userFactory.getUser({
+                       username: 'root',
+                       password: 'password',
+                       email: 'root@prism.calstatela.edu',
+                       name: {
+                         first: 'Root',
+                         last: 'User'
+                       },
+                       internal: true,
+                       root: true
+                     })
+              .then(resolve, reject);
+        }, reject);
       }, reject);
     }, reject);
   });
@@ -46,4 +50,30 @@ function createGroups(groups) {
                                            name: group,
                                            access: true
                                          })).save()));
+}
+
+const coreTemplates = [{
+                         'title': 'Node 1 Document',
+                         'completionEstimate': 8
+                       },
+                       {
+                         'title': 'Node 2 Document',
+                         'completionEstimate': 3
+                       },
+                       {
+                         'title': 'Node 3 Document',
+                         'completionEstimate': 3
+                       }];
+
+function createCoreTemplates() {
+  const Document = mongoose.model('Document');
+
+  return Promise.all(coreTemplates.map(function(template) {
+    return (new Document(_.assign({
+             'template': true,
+             'coreTemplate': true
+           },
+                                  template)))
+        .save();
+  }));
 }
