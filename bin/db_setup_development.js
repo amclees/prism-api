@@ -9,7 +9,8 @@ const reject = function(err) {
   process.exit(1);
 };
 
-require('./db_setup_production')().then(function() {
+require('./db_setup_production')().then(function(rootPassword) {
+  console.log('Root password is ' + rootPassword);
   const userFactory = require('../lib/user_factory');
   const Group = mongoose.model('Group');
 

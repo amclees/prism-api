@@ -44,11 +44,11 @@ The `db_setup_development.js` script from the initial setup creates the followin
 
 X is a number between 1 and 15 (e.g. testUser2, testRoot12, testAdmin15, etc.).
 
+All users created by the development script have a password of `password`.
+
 The `db_setup_development.js` script creates only one account:
 
-* `root` - Root, same as `testRootX`
-
-All users created by the scripts have a password of `password`. It is recommended that the `root` user's password is changed in production environments.
+* `root` - Root, same as `testRootX`. The password is a random string included in the output of the setup script.
 
 Example request and response bodies from the POST `/login` endpoint:
 

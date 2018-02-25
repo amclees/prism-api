@@ -10,14 +10,17 @@ module.exports = function() {
     const db = require('../db');
     db.init([]);
 
+    const rootPassword = require('crypto').randomBytes(8).toString('hex');
+
     Promise.all(mongoose.modelNames().map(modelName => mongoose.model(modelName).remove({}))).then(function() {
       const userFactory = require('../lib/user_factory');
 
       createCoreTemplates().then(function() {
         createGroups(['Administrators', 'Program Review Subcommittee']).then(function() {
+
           userFactory.getUser({
                        username: 'root',
-                       password: 'password',
+                       password: rootPassword,
                        email: 'root@prism.calstatela.edu',
                        name: {
                          first: 'Root',
@@ -26,7 +29,9 @@ module.exports = function() {
                        internal: true,
                        root: true
                      })
-              .then(resolve, reject);
+              .then(function() {
+                resolve(rootPassword);
+              }, reject);
         }, reject);
       }, reject);
     }, reject);
@@ -34,8 +39,8 @@ module.exports = function() {
 };
 
 if (!module.parent) {
-  module.exports().then(function() {
-    console.log('Successfully set up production db');
+  module.exports().then(function(rootPassword) {
+    console.log('Successfully set up production db. Root password is ' + rootPassword);
     process.exit(0);
   }, function(err) {
     console.log('Error setting up production db');
