@@ -38,6 +38,13 @@ app.use(function(req, res, next) {
   }
 });
 
+app.use(function(req, res, next) {
+  if (req.newToken) {
+    res.set('X-PRISM-New-Token', req.newToken);
+  }
+  next();
+});
+
 for (let route of routes) {
   app.use('/api', route);
 }

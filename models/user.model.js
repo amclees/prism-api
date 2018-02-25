@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  groups: [mongoose.Schema.Types.ObjectId],
   // Flag for 'deleted' account users
   disabled: Boolean,
   samlType: String,

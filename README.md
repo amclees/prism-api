@@ -10,7 +10,7 @@ These instruction assume that NodeJS, NPM, and MongoDB are already installed on 
 2. Run `npm install` from the project root to install dependencies
 3. Make a copy of the `.env_skeleton` file named `.env` and ensure all parameters that are not commented out in the `.env_skeleton` file are configured properly
 4. Run the MongoDB server that is configured in the `.env` file
-5. Run `node bin/create_users.js`. It is important to do this from the root of this repository so that the `.env` file can be loaded.
+5. Run `node bin/db_setup_development.js` **or** `node bin/db_setup_production.js` for development and production environments respectively. **This will remove all items from ALL MongoDB collections used by PRISM.** It is important to do this from the root of this repository so that the `.env` file can be loaded.
 
 ### Running
 
@@ -35,7 +35,7 @@ Make a request to the POST `/login` endpoint with the following format:
 }
 ```
 
-The `create_users.js` script from the initial setup creates the following users:
+The `db_setup_development.js` script from the initial setup creates the following users:
 
 * `testUserX` - Basic users, not members of any groups
 * `testPrsX` - Program Review Subcommittee members, members of the `Program Review Subcommittee` group
@@ -44,7 +44,11 @@ The `create_users.js` script from the initial setup creates the following users:
 
 X is a number between 1 and 15 (e.g. testUser2, testRoot12, testAdmin15, etc.).
 
-All users created by the `create_users.js` script have a password of `password`.
+All users created by the development script have a password of `password`.
+
+The `db_setup_development.js` script creates only one account:
+
+* `root` - Root, same as `testRootX`. The password is a random string included in the output of the setup script.
 
 Example request and response bodies from the POST `/login` endpoint:
 
@@ -86,7 +90,7 @@ The root URL for the API is `/api` and the default port for the server is 3000.
 
 All endpoints except POST `/login` require authentication via Passport.
 
-To authenticate, include the `Authorization` header in all HTTP requests to the API. The format except is `Authorization: Bearer :token` where `:token` is the token received from the POST `/login` endpoint.
+To authenticate, include the `Authorization` header in all HTTP requests to the API. The format except is `Authorization: Bearer :token` where `:token` is the token received from the POST `/login` endpoint. The cookie `jwtToken` can also be included with the value of the token for authentication.
 
 ### Useful links
 
