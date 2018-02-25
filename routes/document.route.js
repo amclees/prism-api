@@ -11,6 +11,7 @@ const Document = mongoose.model('Document');
 const access = require('../lib/access');
 const actionLogger = require('../lib/action_logger');
 const settings = require('../lib/config/settings');
+const subscribeMiddlewareFactory = require('../lib/subscribe_middleware_factory');
 
 const upload =
     multer({
@@ -276,5 +277,8 @@ router.post('/document/:document_id/revision', allowDocumentGroups, function(req
     winston.info(`Error deleting revision ${req.params.revision} on document ${req.params.document_id}`);
   });
 });
+
+router.post('/document/:id/subscribe', subscribeMiddlewareFactory.getSubscribeMiddleware('Document', true));
+router.post('/document/:id/unsubscribe', subscribeMiddlewareFactory.getSubscribeMiddleware('Document', false));
 
 module.exports = router;

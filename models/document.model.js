@@ -64,6 +64,10 @@ const documentSchema = new mongoose.Schema({
     }],
     default: []
   },
+  subscribers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   // Flag set on templates
   template: Boolean,
   // Flag set on core templates (templates tied to the base Stage)
