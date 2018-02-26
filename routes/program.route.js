@@ -58,6 +58,16 @@ router.route('/program/:program_id')
       });
     });
 
+router.get('/program/:program_id/reviews', access.allowGroups(['Administrators']), function(req, res, next) {
+  Review.find({program: req.params.program_id}).then(function(dependents) {
+    if (!dependents || dependents.length === 0) {
+      res.json([]);
+      return;
+    }
+    res.json(dependents);
+  }, next);
+});
+
 router.route('/program').post(access.allowGroups(['Administrators']), function(req, res, next) {
   Program.create(req.body).then(function(newProgram) {
     res.status(201);
