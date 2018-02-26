@@ -11,7 +11,7 @@ const settings = require('../lib/config/settings');
 
 router.get('/actions', access.attachGroups, function(req, res, next) {
   const query = {};
-  if (!req.user.root && _.map(req.groups, 'name').indexOf('Administrators') === -1) {
+  if (!req.user.root && req.groups.indexOf(access.groupNameToId['Administrators'] + '') === -1) {
     query.user = req.user._id;
   } else if (req.query.user) {
     query.user = req.query.user;
