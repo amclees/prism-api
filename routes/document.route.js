@@ -84,7 +84,7 @@ router.route('/document/:document_id/comment/:comment_id')
       winston.info('No comment with specified index.');
       return;
     }
-    document.comments[comments_index].text = JSON.stringify(req.body);
+    document.comments[comments_index].text = req.body.text;
     document.save().then(function(){
       res.sendStatus(200);
       winston.info(`Updated comment with id ${req.params.comment_id}`);
@@ -130,10 +130,11 @@ router.route('/document/:document_id/comment/:comment_id')
         return;
       }
       document.comments.push({
-        'text': JSON.stringify(req.body),
+        'text': req.body.text,
         'creationDate': Date.now(),
-        'author': req.user,
+        'author': req.user.excludeFields(),
         'revision': req.body.revision,
+        'originalFilename': req.body.originalFilename
       });
       document.save().then(function(){
         winston.info(`Created comment with id ${req.params.comment_id}.`);

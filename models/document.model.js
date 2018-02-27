@@ -60,6 +60,10 @@ const documentSchema = new mongoose.Schema({
       revision: {
         type: Number,
         required: true
+      },
+      originalFilename: {
+        type: String,
+        required: true
       }
     }],
     default: []
