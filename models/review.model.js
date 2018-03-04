@@ -73,7 +73,8 @@ const nodeValidators = {
   'finalized': _.isBoolean,
   'email': validEmailSettings,
   'document': validObjectId,
-  'prerequisites': validPrerequisites
+  'prerequisites': validPrerequisites,
+  'title': _.isString
 };
 
 function validValue(key, value) {
