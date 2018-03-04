@@ -13,6 +13,10 @@ const programSchema = new mongoose.Schema({
   department: {
     type: mongoose.Schema.Types.ObjectId,
     required: true
+  },
+  nextReviewDate: {
+    type: Date,
+    required: true
   }
 });
 
