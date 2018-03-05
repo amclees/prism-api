@@ -15,7 +15,7 @@ const actionLogger = require('../lib/action_logger');
 
 router.route('/review/:review_id')
     .get(function(req, res, next) {
-      Review.findById(req.params.review_id).then(function(review) {
+      Review.findById(req.params.review_id).populate('program').then(function(review) {
         if (review === null || review.deleted) {
           next();
           return;
