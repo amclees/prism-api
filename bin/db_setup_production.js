@@ -57,18 +57,7 @@ function createGroups(groups) {
                                          })).save()));
 }
 
-const coreTemplates = [{
-                         'title': 'Node 1 Document',
-                         'completionEstimate': 8
-                       },
-                       {
-                         'title': 'Node 2 Document',
-                         'completionEstimate': 3
-                       },
-                       {
-                         'title': 'Node 3 Document',
-                         'completionEstimate': 3
-                       }];
+const coreTemplates = require('../lib/base_review').templates;
 
 function createCoreTemplates() {
   const Document = mongoose.model('Document');
