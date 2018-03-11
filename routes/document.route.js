@@ -72,82 +72,82 @@ router.route('/document').post(function(req, res, next) {
 });
 
 router.route('/document/:document_id/comment/:comment_id')
-.patch(allowDocumentGroups, function(req, res, next) {
+    .patch(allowDocumentGroups, function(req, res, next) {
+      Document.findById(req.params.document_id).then(function(document) {
+        let comments_index = Number.parseInt(req.params.comment_id);
+        if (document === null) {
+          next();
+          return;
+        }
+        if (isNaN(comments_index)) {
+          next();
+          winston.info('No comment with specified index.');
+          return;
+        }
+        document.comments[comments_index].text = req.body.text;
+        document.save().then(function() {
+          res.sendStatus(200);
+          winston.info(`Updated comment with id ${req.params.comment_id}`);
+        });
+      }, function(err) {
+        next(err);
+        winston.info(`Failed to update comment with id ${req.params.comment_id}.`);
+      }, function(err) {
+        next(err);
+        winston.info(`Failed to find document with id ${req.params.document_id}`);
+      });
+    })
+    .delete(allowDocumentGroups, function(req, res, next) {
+      Document.findById(req.params.document_id).then(function(document) {
+        let comments_index = Number.parseInt(req.params.comment_id);
+        if (document === null) {
+          next();
+          return;
+        }
+        if (isNaN(comments_index)) {
+          next();
+          winston.info(`No comment with that index`);
+        }
+        document.comments.splice(comments_index, 1);
+        document.save().then(function() {
+          res.sendStatus(200);
+          winston.info(`Deleted comment with id ${req.params.comment_id}`);
+          winston.info(comments_index);
+        });
+      }, function(err) {
+        next(err);
+        winston.info(`Failed to find comment with id  ${req.params.comment_id} for comment deletion.`);
+      }, function(err) {
+        next(err);
+        winston.info(`Failed to find document with id ${req.params.document_id} for comment deletion.`);
+      });
+    });
+
+router.route('/document/:document_id/comment').post(allowDocumentGroups, function(req, res, next) {
   Document.findById(req.params.document_id).then(function(document) {
-    let comments_index = Number.parseInt(req.params.comment_id);
     if (document === null) {
       next();
       return;
     }
-    if (isNaN(comments_index)) {
-      next();
-      winston.info('No comment with specified index.');
-      return;
-    }
-    document.comments[comments_index].text = req.body.text;
-    document.save().then(function(){
+    document.comments.push({
+      'text': req.body.text,
+      'creationDate': Date.now(),
+      'author': req.user.excludeFields(),
+      'revision': req.body.revision,
+      'originalFilename': req.body.originalFilename
+    });
+    document.save().then(function() {
+      winston.info(`Created comment with id ${req.params.comment_id}.`);
       res.sendStatus(200);
-      winston.info(`Updated comment with id ${req.params.comment_id}`);
     });
   }, function(err) {
     next(err);
-    winston.info(`Failed to update comment with id ${req.params.comment_id}.`);
-}, function(err) {
-  next(err);
-  winston.info(`Failed to find document with id ${req.params.document_id}`);
-  });
-})
-.delete(allowDocumentGroups, function(req, res, next) {
-  Document.findById(req.params.document_id).then(function(document) {
-    let comments_index = Number.parseInt(req.params.comment_id);
-    if (document === null) {
-      next();
-      return;
-    }
-    if (isNaN(comments_index)){
-      next();
-      winston.info(`No comment with that index`);
-    }
-    document.comments.splice(comments_index, 1);
-    document.save().then(function(){
-      res.sendStatus(200);
-      winston.info(`Deleted comment with id ${req.params.comment_id}`);
-      winston.info(comments_index);
-    });
-  }, function(err) {
-      next(err);
-      winston.info(`Failed to find comment with id  ${req.params.comment_id} for comment deletion.`);
-    }, function(err) {
-      next(err);
-      winston.info(`Failed to find document with id ${req.params.document_id} for comment deletion.`);
-    });
-  });
-
-  router.route('/document/:document_id/comment').post(allowDocumentGroups, function(req,res,next) {
-    Document.findById(req.params.document_id).then(function(document) {
-      if(document === null ) {
-        next();
-        return;
-      }
-      document.comments.push({
-        'text': req.body.text,
-        'creationDate': Date.now(),
-        'author': req.user.excludeFields(),
-        'revision': req.body.revision,
-        'originalFilename': req.body.originalFilename
-      });
-      document.save().then(function(){
-        winston.info(`Created comment with id ${req.params.comment_id}.`);
-        res.sendStatus(200);
-      });
-    }, function(err) {
-      next(err);
-      winston.info(`Error creating comment with id ${req.params.comment_id}.`);
+    winston.info(`Error creating comment with id ${req.params.comment_id}.`);
   }, function(err) {
     next(err);
     winston.info(`Failed to find document with ${req.params.document_id} for comment upload.`);
-    });
   });
+});
 
 router.route('/document/:document_id/revision/:revision/file')
     .all(allowDocumentGroups)
@@ -262,7 +262,7 @@ router.post('/document/:document_id/revision', allowDocumentGroups, function(req
       }
       document.addRevision(`Revert to revision: '${document.revisions[revertIndex].message}'`, req.user);
       document.revisions[document.revisions.length - 1].filename = document.revisions[revertIndex].filename;
-      document.revisions[document.revisions.length - 1].fileExtension = document.revisions[revertIndex].fileExtension;
+      document.revisions[document.revisions.length - 1].originalFilename = document.revisions[revertIndex].originalFilename;
     } else {
       document.addRevision(req.body.message, req.user);
     }
