@@ -23,7 +23,9 @@ const actionSchema = new mongoose.Schema({
     default: 'none'
   },
   // Object is the object affected by the action
-  object: mongoose.Schema.Types.ObjectId
+  object: mongoose.Schema.Types.ObjectId,
+  // Label is a user-friendly name of the object being affected by the action
+  label: String
 });
 
 actionSchema.path('type').validate({

@@ -30,7 +30,7 @@ router.route('/program/:program_id')
         }
         res.json(updatedProgram);
         winston.info(`Updated program with id ${req.params.program_id}`);
-        actionLogger.log('updated a program', req.user, 'program', updatedProgram._id);
+        actionLogger.log('updated a program', req.user, 'program', updatedProgram._id, updatedProgram.name);
       }, function(err) {
         next(err);
       });
@@ -58,12 +58,22 @@ router.route('/program/:program_id')
       });
     });
 
+router.get('/program/:program_id/reviews', access.allowGroups(['Administrators']), function(req, res, next) {
+  Review.find({program: req.params.program_id}).then(function(dependents) {
+    if (!dependents || dependents.length === 0) {
+      res.json([]);
+      return;
+    }
+    res.json(dependents);
+  }, next);
+});
+
 router.route('/program').post(access.allowGroups(['Administrators']), function(req, res, next) {
   Program.create(req.body).then(function(newProgram) {
     res.status(201);
     res.json(newProgram);
     winston.info(`Created program with id ${newProgram._id}`);
-    actionLogger.log(`created a new program, ${newProgram.name}`, req.user, 'program', newProgram._id);
+    actionLogger.log(`created a new program`, req.user, 'program', newProgram._id, newProgram.name);
   }, function(err) {
     next(err);
     winston.info('Failed to create program with body:', req.body);

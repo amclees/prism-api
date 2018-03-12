@@ -24,17 +24,18 @@ router.route('/group/:group_id')
       });
     })
     .patch(function(req, res, next) {
-      Group.findByIdAndUpdate(req.params.group_id, {$set: req.body}, {runValidators: true}).then(function(oldGroup) {
+      Group.findByIdAndUpdate(req.params.group_id, {$set: {'name': req.body.name}}, {runValidators: true}).then(function(oldGroup) {
         if (oldGroup === null) {
           next();
           return;
         }
         res.json({
+          '_id': oldGroup._id,
           'name': req.body.name,
           'members': oldGroup.members
         });
         winston.info(`Updated group with id ${req.params.group_id}`);
-        actionLogger.log(`renamed the group "${oldGroup.name}" to "${req.body.name}"`, req.user, 'group', oldGroup._id);
+        actionLogger.log(`renamed the group "${oldGroup.name}" to`, req.user, 'group', oldGroup._id, req.body.name);
       }, function(err) {
         next(err);
       });
@@ -58,7 +59,7 @@ router.route('/group').post(access.allowGroups(['Administrators']), function(req
     res.status(201);
     res.json(newGroup);
     winston.info(`Created group with id ${newGroup._id}`);
-    actionLogger.log(`created the group "${newGroup.name}"`, req.user, 'group', newGroup._id);
+    actionLogger.log(`created the group`, req.user, 'group', newGroup._id, newGroup.name);
   }, function(err) {
     next(err);
     winston.info('Failed to create group with body:', req.body);
@@ -69,62 +70,87 @@ router.route('/group/:group_id/member/:member_id')
     .all(access.allowGroups(['Administrators']))
     .put(function(req, res, next) {
       Group.findById(req.params.group_id).then(function(group) {
-        if (group.members.indexOf(req.params.member_id) !== -1) {
-          res.sendStatus(400);
-          winston.info(`Tried to add already existing member ${req.params.member_id} to group with id ${req.params.group_id}`);
+        if (group === null) {
+          next();
           return;
         }
+        User.findByIdAndUpdate(req.params.member_id).then(function(user) {
+          if (user === null) {
+            next();
+            return;
+          }
+          if (group.members.indexOf(req.params.member_id) !== -1) {
+            res.sendStatus(400);
+            winston.info(`Tried to add already existing member ${req.params.member_id} to group with id ${req.params.group_id}`);
+            return;
+          }
 
-        try {
-          group.members.push(req.params.member_id);
-        } catch (err) {
-          res.sendStatus(400);
-          winston.info(`Tried to add invalid ObjectId '${req.params.member_id}' to group with id ${req.params.group_id}`);
-          return;
-        }
+          try {
+            group.members.push(req.params.member_id);
+          } catch (err) {
+            res.sendStatus(400);
+            winston.info(`Tried to add invalid ObjectId '${req.params.member_id}' to group with id ${req.params.group_id}`);
+            return;
+          }
 
-        group.save().then(function(updatedGroup) {
-          res.json(updatedGroup);
-          winston.info(`Added member ${req.params.member_id} to group with id ${req.params.group_id}`);
-          actionLogger.log(`added member to group ${updatedGroup.name}`, req.user, 'group', updatedGroup._id);
-        }, function(err) {
-          next(err);
-          winston.error(`Failed to add member ${req.params.member_id} to group with id ${req.params.group_id}, error:`, err);
+          user.groups.push(group._id);
+
+          user.save().then(function() {
+            group.save().then(function(updatedGroup) {
+              res.json(updatedGroup);
+              winston.info(`Added member ${req.params.member_id} to group with id ${req.params.group_id}`);
+              actionLogger.log(`added member to group ${updatedGroup.name}`, req.user, 'group', updatedGroup._id);
+            }, next);
+          }, next);
         });
-      }, function(err) {
-        err.status = 404;
-        next(err);
-        winston.info(`Tried to add member ${req.params.member_id} to nonexistent group with id ${req.params.group_id}`);
-      });
+      }, next);
     })
     .delete(function(req, res, next) {
       Group.findById(req.params.group_id).then(function(group) {
-        try {
-          if (group.name === 'Administrators' && req.user._id.equals(mongoose.Types.ObjectId(req.params.member_id))) {
-            const err = new Error('Administrators cannot remove themselves from the administrator group');
-            err.status = 400;
+        if (group === null) {
+          next();
+          return;
+        }
+        User.findByIdAndUpdate(req.params.member_id).then(function(user) {
+          if (user === null) {
+            next();
+            return;
+          }
+
+          try {
+            if (group.name === 'Administrators' && req.user._id.equals(mongoose.Types.ObjectId(req.params.member_id))) {
+              const err = new Error('Administrators cannot remove themselves from the administrator group');
+              err.status = 400;
+              next(err);
+              return;
+            }
+          } catch (err) {
             next(err);
             return;
           }
-        } catch (err) {
-          next(err);
-          winston.error(err);
-          return;
-        }
-        const location = group.members.indexOf(req.params.member_id);
-        if (location === -1) {
-          res.sendStatus(404);
-          winston.info(`Failed to delete nonexistent member ${req.params.member_id} from group with id ${req.params.group_id}`);
-          return;
-        }
-        const removed = group.members.splice(location, 1)[0];
-        group.save().then(function() {
-          res.json(removed);
-          winston.info(`Deleted member ${req.params.member_id} from group with id ${req.params.group_id}`);
-          actionLogger.log(`removed member from group ${group.name}`, req.user, 'group', group._id);
-        }, function(err) {
-          next(err);
-          winston.error(`Failed to delete member ${req.params.member_id} from group with id ${req.params.group_id}, error:`, err);
+          const location = group.members.indexOf(req.params.member_id);
+          const groupLocation = user.groups.indexOf(group._id);
+          if (location === -1 && groupLocation === -1) {
+            res.sendStatus(404);
+            winston.info(`Failed to delete nonexistent member ${req.params.member_id} from group with id ${req.params.group_id}`);
+            return;
+          } else if (location === -1 || groupLocation === -1) {
+            winston.warn(`User and Group membership records were not consistent when removing user with id ${req.params.member_id}`);
+          }
+          if (location !== -1) {
+            group.members.splice(location, 1)[0];
+          }
+          if (groupLocation !== -1) {
+            user.groups.splice(groupLocation, 1)[0];
+          }
+
+          user.save().then(function() {
+            group.save().then(function() {
+              res.sendStatus(204);
+              winston.info(`Deleted member ${req.params.member_id} from group with id ${req.params.group_id}`);
+              actionLogger.log(`removed member from group`, req.user, 'group', group._id, group.name);
+            }, next);
+          }, next);
         });
       }, function(err) {
         err.status = 404;
@@ -132,6 +158,22 @@ router.route('/group/:group_id/member/:member_id')
         winston.info(`Tried to delete member ${req.params.member_id} from nonexistent group with id ${req.params.group_id}`);
       });
     });
+
+router.get('/prs', function(req, res, next) {
+  Group.findOne({name: 'Program Review Subcommittee'}).populate('members').exec().then(function(group) {
+    if (group === null) {
+      winston.error('PRS group does not exist');
+      return;
+    }
+    for (let i = 0; i < group.members.length; i++) {
+      group.members[i] = group.members[i].excludeFields();
+    }
+    res.json(group);
+  }, function(err) {
+    next(err);
+    winston.error('Error fetching PRS:', err);
+  });
+});
 
 router.get('/groups', access.allowGroups(['Administrators']), function(req, res, next) {
   Group.find().exec().then(function(groups) {

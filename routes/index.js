@@ -4,9 +4,12 @@ module.exports = [
   require('./department.route'),
   require('./document.route'),
   require('./event.route'),
+  require('./file_manager.route'),
   require('./group.route'),
   require('./login.route'),
   require('./program.route'),
+  require('./resource.route'),
+  require('./review.route'),
   require('./template.route'),
   require('./test_endpoint'),
   require('./user.route')
