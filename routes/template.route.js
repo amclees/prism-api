@@ -14,18 +14,35 @@ router.post('/template', access.allowGroups(['Administrators']), function(req, r
     return;
   }
   Document.create({
-    title: req.body.title,
-    template: true,
-    completionEstimate: req.body.completionEstimate
-  }).then(function(newDocument) {
-    res.status(201);
-    res.json(newDocument.excludeFields());
-    winston.info(`Created template with id ${newDocument._id}`);
-    actionLogger.log(`created a new template "${newDocument.title}"`, req.user, 'document', newDocument._id);
-  }, function(err) {
-    next(err);
-    winston.info('Failed to create document with body:', req.body);
-  });
+            title: req.body.title,
+            template: true,
+            completionEstimate: req.body.completionEstimate
+          })
+      .then(function(newDocument) {
+        res.status(201);
+        res.json(newDocument.excludeFields());
+        winston.info(`Created template with id ${newDocument._id}`);
+        actionLogger.log(`created a new template`, req.user, 'document', newDocument._id, newDocument.title);
+      }, function(err) {
+        next(err);
+        winston.info('Failed to create document with body:', req.body);
+      });
+});
+
+router.delete('/template/:template_id', access.allowGroups(['Administrators']), function(req, res, next) {
+  Document.findById(req.params.template_id).then(function(toRemove) {
+    if (toRemove === null) {
+      res.sendStatus(404);
+      return;
+    }
+    if (!toRemove.template || toRemove.coreTemplate) {
+      res.sendStatus(400);
+      return;
+    }
+    toRemove.remove().then(function() {
+      res.sendStatus(204);
+    }, next);
+  }, next);
 });
 
 router.get('/templates', access.allowGroups(['Administrators']), function(req, res, next) {

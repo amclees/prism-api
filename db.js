@@ -30,7 +30,7 @@ module.exports.init = function(finishHooks) {
   });
 
   mongoose.connection.on('disconnected', () => {
-    winston.warn('Mongoose disconnected (likely MongoDB server restarting)');
+    winston.warn('Mongoose disconnected');
   });
 };
 

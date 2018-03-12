@@ -10,11 +10,15 @@ const groupSchema = new mongoose.Schema({
     required: true
   },
   members: {
-    type: [mongoose.Schema.Types.ObjectId],
+    type: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }],
     default: []
   },
   access: Boolean
-}, {usePushEach: true});
+},
+                                        {usePushEach: true});
 
 groupSchema.path('name').validate({
   validator: validators.unique('Group', 'name'),

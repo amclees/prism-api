@@ -30,7 +30,7 @@ router.route('/college/:college_id')
         }
         res.json(updatedCollege);
         winston.info(`Updated college with id ${req.params.college_id}`);
-        actionLogger.log('updated a college', req.user, 'college', updatedCollege._id);
+        actionLogger.log('updated a college', req.user, 'college', updatedCollege._id, updatedCollege.name);
       }, function(err) {
         next(err);
       });
@@ -63,7 +63,7 @@ router.route('/college').post(access.allowGroups(['Administrators']), function(r
     res.status(201);
     res.json(newCollege);
     winston.info(`Created college with id ${newCollege._id}`);
-    actionLogger.log(`created a new college, ${newCollege.name}`, req.user, 'college', newCollege._id);
+    actionLogger.log(`created a new college`, req.user, 'college', newCollege._id, newCollege.name);
   }, function(err) {
     next(err);
     winston.info('Failed to create college with body:', req.body);

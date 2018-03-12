@@ -18,7 +18,7 @@ const documentSchema = new mongoose.Schema({
         required: true
       },
       filename: String,
-      fileExtension: String,
+      originalFilename: String,
       dateUploaded: {
         type: Date,
         default: Date.now
@@ -60,17 +60,31 @@ const documentSchema = new mongoose.Schema({
       revision: {
         type: Number,
         required: true
+      },
+      originalFilename: {
+        type: String,
+        required: true
       }
     }],
     default: []
   },
+  subscribers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   // Flag set on templates
   template: Boolean,
   // Flag set on core templates (templates tied to the base Stage)
   coreTemplate: Boolean,
-  // Estimated days to complete document (used in templates only)
-  completionEstimate: Number
-}, {usePushEach: true});
+  // Estimated days to complete document (used in templates only, only used to instantiate review documents, no updates afterwards affect existing reviews)
+  completionEstimate: Number,
+  locked: Boolean,
+  groups: {
+    type: [String],
+    default: ['Administrators']
+  }
+},
+                                           {usePushEach: true});
 
 documentSchema.methods.delete = function() {
   return new Promise((resolve, reject) => {
@@ -140,5 +154,9 @@ documentSchema.methods.excludeFields = function() {
   });
   return object;
 };
+documentSchema.methods.validComment = function(index, allowDeleted = false) {
+  return index >= 0 && index < this.comments.length && (allowDeleted || !this.comments[index].deleted);
+};
+
 
 module.exports = mongoose.model('Document', documentSchema);
