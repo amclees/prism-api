@@ -30,18 +30,6 @@ const upload =
     }).single('file');
 
     router.route('/resource/:resource_id')
-    .get(access.allowDatabaseGroups('Document', 'document_id', 'groups'), function(req, res, next) {
-      Resource.findById(req.params.resource_id).then(function(resource) {
-        if(resource === null) {
-          next();
-          return;
-        }
-        res.json(resource);
-      }, function( err) {
-        next(err);
-        winston.info(`Failed to find document with id ${req.params.resource_id}`);
-      });
-    })
     .delete(access.allowGroups(['Administrators']), function(req, res, next) {
       Resource.findByIdAndRemove(req.params.resource_id).then(function(removedResource) {
         if (removedResource) {
@@ -56,7 +44,7 @@ const upload =
       });
     });
 
-    router.route('/resources').post(access.allowGroups(['Administrators']), function(req, res, next) {
+    router.route('/resource').post(access.allowGroups(['Administrators']), function(req, res, next) {
       Resource.findById(req.params.resource_id).then(function(resource) {
         if (resource === null) {
           next();
@@ -87,6 +75,15 @@ const upload =
         winston.info(`Failed to find document with id ${req.params.resource_id} for resource file upload`);
       });
     });
+
+    router.route('/resource').get(access.allowGroups(['Administrators']), function(req, res, next) {
+        Resource.find({}).exec().then(function(resources){
+          res.json(resources);
+        }, function(err) {
+          next(err);
+          winston.error('Error fetching all resources:', err);
+        });
+      });
 
 //test resource
     router.route('/resource').post(function(req, res, next) {
