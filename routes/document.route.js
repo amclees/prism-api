@@ -181,11 +181,11 @@ router.route('/document/:document_id/revision/:revision/file')
         next(err);
         return;
       }
-      if (!document.revisions[req.params.revision].uploader._id.equals(req.user._id)) {
-        winston.warn(`Non-uploader ${req.user._id} attempted to upload to a revision before the uploader ${document.revisions[req.params.revision].uploader._id}`);
-        res.sendStatus(403);
-        return;
-      }
+      // if (!document.revisions[req.params.revision].uploader._id.equals(req.user._id)) {
+      //   winston.warn(`Non-uploader ${req.user._id} attempted to upload to a revision before the uploader ${document.revisions[req.params.revision].uploader._id}`);
+      //   res.sendStatus(403);
+      //   return;
+      // }
       upload(req, res, function(multerError) {
         if (multerError) {
           next(multerError);
