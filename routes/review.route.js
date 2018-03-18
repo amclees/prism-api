@@ -56,7 +56,7 @@ router.route('/review/:review_id')
     });
 
 router.post('/review/:review_id/restore', function(req, res, next) {
-  Review.findByIdAndUpdate(req.params.review_id, {deleted: false}).then(function(review) {
+  Review.findByIdAndUpdate(req.params.review_id, {deleted: null}).then(function(review) {
     if (review === null) {
       res.sendStatus(404);
     } else {
@@ -166,6 +166,7 @@ router.post('/review/:review_id/node', function(req, res, next) {
       review.endNodes.push(newNodeId);
       review.nodes[newNodeId] = {
         'document': document._id,
+        'title': document.title,
         'completionEstimate': document.completionEstimate || req.body.completionEstimate,
         'prerequisites': []
       };
@@ -181,10 +182,10 @@ router.post('/review/:review_id/node', function(req, res, next) {
   });
 });
 
-router.get('/reviews', access.allowGroups(['Administrators']), function(req, res, next) {
+router.get('/reviews', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   const query = {};
-  if (!req.user.root && _.map(req.groups, 'name').indexOf('Administrators') === -1) {
-    query.deleted = false;
+  if (!req.user.root && req.groups.indexOf(access.groupNameToId['Administrators']) === -1) {
+    query.deleted = null;
   }
 
   Review.find(query, 'program startDate leadReviewers deleted').exec().then(function(reviews) {
