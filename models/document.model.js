@@ -61,10 +61,7 @@ const documentSchema = new mongoose.Schema({
         type: Number,
         required: true
       },
-      originalFilename: {
-        type: String,
-        required: true
-      }
+      originalFilename: String,
     }],
     default: []
   },
