@@ -17,6 +17,10 @@ router.get('/actions', access.attachGroups, function(req, res, next) {
     query.user = req.query.user;
   }
 
+  if (req.query.type !== undefined) {
+    query.type = req.query.type;
+  }
+
   if (req.query.count === '1') {
     Action.count(query).then(function(count) {
       res.json({'count': count});

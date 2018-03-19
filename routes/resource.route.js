@@ -45,36 +45,15 @@ const upload =
     });
 
     router.route('/resource').post(access.allowGroups(['Administrators']), function(req, res, next) {
-      Resource.findById(req.params.resource_id).then(function(resource) {
-        if (resource === null) {
-          next();
-          return;
-        }
-        if (resource.filename !== null) {
-          const err = new Error('Resource file must be null for a new file to be uploaded');
-          err.status = 400;
-          next(err);
-          return;
-        }
         upload(req, res, function(multerError) {
           if (multerError) {
             next(multerError);
             return;
           }
-          resource.filename = req.file.filename;
-          resource.fileExtension = path.extname(req.file.originalname).toLowerCase();
-          resource.save().then(function() {
-            res.sendStatus(200);
-          }, function(err) {
-            next(err);
-            winston.error('Error saving document after file upload', err);
-          });
+          Resource.title = req.file.filename;
+          Resource.uploader= req.user;
         });
-      }, function(err) {
-        next(err);
-        winston.info(`Failed to find document with id ${req.params.resource_id} for resource file upload`);
       });
-    });
 
     router.route('/resource').get(access.allowGroups(['Administrators']), function(req, res, next) {
         Resource.find({}).exec().then(function(resources){

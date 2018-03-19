@@ -41,29 +41,37 @@ router.route('/group/:group_id')
       });
     })
     .delete(function(req, res, next) {
-      Group.findByIdAndRemove(req.params.group_id).then(function(removedDocument) {
-        if (removedDocument) {
-          res.sendStatus(204);
-          winston.info(`Removed group with id ${req.params.group_id}`);
-        } else {
+      Group.findById(req.params.group_id).then(function(group) {
+        if (!group) {
           res.sendStatus(404);
           winston.info(`Tried to remove nonexistent group with id ${req.params.group_id}`);
         }
-      }, function(err) {
-        next(err);
-      });
+        if (group.access) {
+          res.sendStatus(400);
+          winston.info(`Tried to remove access group with id ${req.params.group_id}`);
+          return;
+        }
+        group.remove().then(function() {
+          res.sendStatus(204);
+          winston.info(`Removed group with id ${req.params.group_id}`);
+        }, next);
+      }, next);
     });
 
 router.route('/group').post(access.allowGroups(['Administrators']), function(req, res, next) {
-  Group.create(req.body).then(function(newGroup) {
-    res.status(201);
-    res.json(newGroup);
-    winston.info(`Created group with id ${newGroup._id}`);
-    actionLogger.log(`created the group`, req.user, 'group', newGroup._id, newGroup.name);
-  }, function(err) {
-    next(err);
-    winston.info('Failed to create group with body:', req.body);
-  });
+  Group.create({
+         'name': req.body.name,
+         'members': req.body.members
+       })
+      .then(function(newGroup) {
+        res.status(201);
+        res.json(newGroup);
+        winston.info(`Created group with id ${newGroup._id}`);
+        actionLogger.log(`created the group`, req.user, 'group', newGroup._id, newGroup.name);
+      }, function(err) {
+        next(err);
+        winston.info('Failed to create group with body:', req.body);
+      });
 });
 
 router.route('/group/:group_id/member/:member_id')
