@@ -96,7 +96,7 @@ router.post('/review/:review_id/node/:node_id/finalize', function(req, res, next
         next(new Error(`Invalid document id ${review.nodes[req.params.node_id].document} on review ${review._id}`));
         return;
       }
-      review.nodes[req.params.node_id] = true;
+      review.nodes[req.params.node_id].finalized = true;
       review.recalculateDates();
       review.markModified('nodes');
       review.save().then(function() {
