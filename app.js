@@ -14,6 +14,7 @@ const passport = require('passport');
 const app = express();
 app.disable('x-powered-by');
 
+
 const access = require('./lib/access');
 const db = require('./db');
 db.init([access.init]);
@@ -48,7 +49,7 @@ app.use(function(req, res, next) {
 for (let route of routes) {
   app.use('/api', route);
 }
-
+const cronexample = require('./lib/cron');
 require('./error_handler')(app);
 
 // Teardown can be passed any modules necessary for proper teardown
