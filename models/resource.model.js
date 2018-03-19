@@ -7,10 +7,6 @@ const resourceSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  message: {
-    type: String,
-    required: true
-  },
   filename: String,
   fileExtension: String,
   dateUploaded: {
@@ -24,7 +20,7 @@ const resourceSchema = new mongoose.Schema({
   },
   groups: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true
+    ref: 'Group'
   }
 
 
