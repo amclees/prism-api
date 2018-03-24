@@ -44,16 +44,36 @@ const upload =
       });
     });
 
-    router.route('/resource').post(access.allowGroups(['Administrators']), function(req, res, next) {
-        upload(req, res, function(multerError) {
-          if (multerError) {
-            next(multerError);
-            return;
-          }
-          Resource.title = req.file.filename;
-          Resource.uploader= req.user;
+    //test resource
+        router.route('/resource').post(function(req, res, next) {
+          Resource.create({title: req.body.title, uploader: req.user}).then(function(newResource) {
+            res.sendStatus(201);
+            winston.info(`Created resource with id ${newResource._id}`);
+          }, function(err) {
+            next(err);
+            winston.info('Failed to create document with body:', req.body);
+          });
+        });
+
+      router.route('/resource/:resource_id/file').post(access.allowGroups(['Administrators']), function(req, res, next) {
+        Resource.findById(req.params.resource_id).then(function(resource){
+          upload(req, res, function(multerError) {
+            if (multerError) {
+              next(multerError);
+              return;
+            }
+            resource.title = req.file.filename;
+            resource.save().then(function() {
+              winston.info(`Successfully uploaded file.`);
+              res.sendStatus(200);
+            });
+          }, function(err){
+            next(err);
+            winston.info(`Failed to upload file with resource id ${req.params.resource_id}`);
+          });
         });
       });
+
 
     router.route('/resource').get(access.allowGroups(['Administrators']), function(req, res, next) {
         Resource.find({}).exec().then(function(resources){
@@ -64,14 +84,5 @@ const upload =
         });
       });
 
-//test resource
-    router.route('/resource').post(function(req, res, next) {
-      Resource.create(req.body).then(function(newResource) {
-        res.status(201);
-        winston.info(`Created resource with id ${newResource._id}`);
-      }, function(err) {
-        next(err);
-        winston.info('Failed to create document with body:', req.body);
-      });
-    });
+
     module.exports = router;
