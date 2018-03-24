@@ -47,7 +47,7 @@ const upload =
     //test resource
         router.route('/resource').post(function(req, res, next) {
           Resource.create({title: req.body.title, uploader: req.user}).then(function(newResource) {
-            res.sendStatus(201);
+            res.json(newResource);
             winston.info(`Created resource with id ${newResource._id}`);
           }, function(err) {
             next(err);
