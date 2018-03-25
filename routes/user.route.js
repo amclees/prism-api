@@ -15,11 +15,7 @@ router.route('/user/:user_id')
           next();
           return;
         }
-        if (req.user._id.equals(mongoose.Types.ObjectId(req.params.user_id))) {
-          res.json(user.excludeFieldsWithConfig());
-        } else {
-          res.json(user.excludeFields());
-        }
+        res.json(user.excludeFields());
       }, function(err) {
         next(err);
       });
