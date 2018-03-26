@@ -25,6 +25,10 @@ const reviewSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
+  externalReviewers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   endNodes: {
     type: [mongoose.Schema.Types.ObjectId],
     default: []
