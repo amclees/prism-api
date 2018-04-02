@@ -38,7 +38,7 @@ const reviewSchema = new mongoose.Schema({
     default: {}
   },
   deleted: Boolean
-});
+}, {usePushEach: true});
 
 reviewSchema.path('nodes').validate({
   validator: nodeValidator,
