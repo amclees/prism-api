@@ -17,6 +17,9 @@ router.route('/college/:college_id')
           next();
           return;
         }
+        for (let i = 0; i < college.deans.length; i++) {
+          college.deans[i] = college.deans[i].excludeFields();
+        }
         res.json(college);
       }, function(err) {
         next(err);
@@ -73,6 +76,11 @@ router.route('/college').post(access.allowGroups(['Administrators']), function(r
 router.route('/college/:college_id/departments')
     .get(access.allowGroups(['Administrators']), function(req, res, next) {
       Department.find({college: req.params.college_id}).populate('chairs').then(function(departments) {
+        for (let department of departments) {
+          for (let i = 0; i < department.chairs.length; i++) {
+            department.chairs[i] = department.chairs[i].excludeFields();
+          }
+        }
         res.json(departments);
       }, function(err) {
         next(err);
@@ -81,6 +89,11 @@ router.route('/college/:college_id/departments')
 
 router.get('/colleges', access.allowGroups(['Administrators']), function(req, res, next) {
   College.find().populate('deans').exec().then(function(colleges) {
+    for (let college of colleges) {
+      for (let i = 0; i < college.deans.length; i++) {
+        college.deans[i] = college.deans[i].excludeFields();
+      }
+    }
     res.json(colleges);
   }, function(err) {
     next(err);
