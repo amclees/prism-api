@@ -45,17 +45,21 @@ router.route('/document/:document_id')
           return;
         }
       }
-      Document.findByIdAndUpdate(req.params.document_id, {$set: req.body}, {new: true, runValidators: true}).then(function(document) {
-        if (document.locked) {
-          res.sendStatus(403);
-          return;
-        }
+      const document = req.document;
+      if (!document) {
+        next();
+        return;
+      }
+      if (document.locked) {
+        res.sendStatus(403);
+        return;
+      }
+      _.assign(document, req.body);
+      document.save().then(function() {
         res.json(document.excludeFields());
         winston.info(`Updated document with id ${req.params.document_id}`);
         actionLogger.log(`renamed a document to`, req.user, 'document', document._id, document.title);
-      }, function(err) {
-        next(err);
-      });
+      }, next);
     });
 
 // POST endpoint here is for testing, the final application will post to a review or event based endpoint
