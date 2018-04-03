@@ -12,9 +12,9 @@ const Department = require('../models/department.model');
 const Program = require('../models/program.model');
 
 let completed = 0;
-let toComplete = 1;
+let toComplete;
 
-async function loadCSV(callback) {
+function loadCSV(callback) {
     fs.readFile('./bin/raw-programs.csv', 'utf-8', (error, data) => {
         if (error)
             return console.log(error);
@@ -28,95 +28,140 @@ async function loadCSV(callback) {
     });
 }
 
-function createCollege(collegeData) {
-  let collegeId = 0;
-  College.find({name: collegeData.name}).remove((err) => {
-      const college = new College(collegeData);
-      college.save((err, savedCollege) => {
-        collegeId = savedCollege._id;
-      });
-  });
-  return new Promise(resolve => {
-      resolve(collegeId);
-  });
-}
-
-function createDepartment(departmentData) {
-  let departmentId = 0;
-  Department.find({name: departmentData.name}).remove((err) => {
-      const department = new Department(departmentData);
-      department.save((err, savedDepartment) => {
-        departmentId = savedDepartment._id;
-      });
-  });
-  return new Promise(resolve => {
-      resolve(departmentId);
-  });
-}
-
-async function createProgram(programData) {
-  Program.find({name: programData.name}).remove((err) => {
-      const program = new Program(programData);
-      program.save((err, savedProgram) => {
-        completed += 1;
-      });
-  });
-}
-
-function applyImport(entries) {
-  for (let entry of entries) {
-    // Check if college exists
-    College.findOne({name: entry.college}, 'id', (err, foundCollege) => {
-      if(foundCollege) {
-        // Check if department exists
-        Department.findOne({name: entry.department}, '_id', (err, foundDepartment) => {
-          if(foundDepartment) {
-            createProgram({
-              name: entry.program,
-              department: foundDepartment._id
-            });
-          } else {
-            createDepartment({
-              name: entry.department,
-              abbreviation: entry.departmentAbbreviation,
-              college: foundCollege._id
-            }).then(function(departmentId) {
-              createProgram({
-                name: entry.program,
-                department: departmentId
-              });
-            });
-          }
+function createCollege(currentCollege, currentDepartment, currentProgram) {
+  return new Promise((resolve, reject) => {
+    const college = new College(currentCollege);
+    college.save((err, savedCollege) => {
+      if (!err) {
+        currentDepartment.college = savedCollege._id;
+        return createDepartment(currentDepartment, currentProgram).then(function() {
+          resolve();
+        }, err => {
+          console.log(err);
+          reject();
         });
       } else {
-        createCollege({
-          name: entry.college,
-          abbreviation: entry.collegeAbbreviation
-        }).then(function(collegeId) {
-          createDepartment({
-            name: entry.department,
-            abbreviation: entry.departmentAbbreviation,
-            college: collegeId
-          });
-        }).then(function(departmentId) {
-          createProgram({
-            name: entry.program,
-            department: departmentId
-          });
-        });
+        console.log(err);
+        reject();
       }
     });
+  });
+}
+
+function createDepartment(currentDepartment, currentProgram) {
+  return new Promise((resolve, reject) => {
+    const department = new Department(currentDepartment);
+
+    department.save((err, savedDepartment) => {
+
+      if (!err) {
+        currentProgram.department = savedDepartment._id;
+        createProgram(currentProgram).then(function() {
+          resolve();
+        }, err => {
+          console.log(err);
+          reject();
+        });
+      } else {
+        console.log(err);
+        reject();
+      }
+    });
+  });
+}
+
+function createProgram(currentProgram) {
+  return new Promise((resolve, reject) => {
+    const program = new Program(currentProgram);
+    program.save((err, savedProgram) => {
+      if(!err) {
+        completed += 1;
+        resolve();
+      } else {
+        console.log(err);
+        reject();
+      }
+    });
+  });
+}
+
+async function applyImport(entries) {
+  for(let entry of entries) {
+    await importEntry(entry);
   }
 }
 
-function clearDB() {
-  Program.find().remove();
-  Department.find().remove();
-  College.find().remove();
+function importEntry(entry) {
+  return new Promise ((resolve, reject) => {
+    College.findOne({name: entry.college}, '_id', (err, foundCollege) => {
+    if(foundCollege) {
+      Department.findOne({name: entry.department}, '_id', (err, foundDepartment) => {
+        if(foundDepartment) {
+          createProgram({
+            name: entry.program,
+            department: foundDepartment._id,
+            nextReviewDate: entry.nextReviewDate
+          }).then(resolve, reject);;
+        } else {
+          createDepartment({name: entry.department, college: foundCollege._id, abbreviation: entry.departmentAbbreviation},
+            {name: entry.program, nextReviewDate: entry.nextReviewDate }).then(resolve, reject);;
+        }
+      });
+    } else {
+      createCollege({name: entry.college, abbreviation: entry.collegeAbbreviation},
+        {name: entry.department, abbreviation: entry.departmentAbbreviation},
+        {name: entry.program, nextReviewDate: entry.nextReviewDate}).then(resolve, reject);
+    }
+  });
+});
 }
 
-clearDB();
-loadCSV(applyImport);
+function removePrograms() {
+  return new Promise ((resolve, reject) => {
+    Program.find({}).remove(function (err) {
+      if(!err) {
+        resolve();
+      }
+      else {
+        reject();
+      }
+    });
+  });
+}
+
+function removeDepartments() {
+  return new Promise ((resolve, reject) => {
+    Department.find({}).remove(function (err) {
+      if(!err) {
+        resolve();
+      }
+      else {
+        reject();
+      }
+    });
+  });
+}
+
+function removeColleges() {
+  return new Promise ((resolve, reject) => {
+    College.find({}).remove(function (err) {
+      if(!err) {
+        resolve();
+      }
+      else {
+        reject();
+      }
+    });
+  });
+}
+
+removePrograms().then(function () {
+  return removeDepartments();
+}).then(function () {
+  return removeColleges();
+}).then(function () {
+  loadCSV(applyImport);
+});
 
 setInterval(() => {
   if (completed === toComplete) {
