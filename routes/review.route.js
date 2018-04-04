@@ -188,7 +188,7 @@ router.get('/reviews', access.allowGroups(['Administrators', 'Program Review Sub
     query.deleted = null;
   }
 
-  Review.find(query, 'program startDate leadReviewers deleted').exec().then(function(reviews) {
+  Review.find(query).exec().then(function(reviews) {
     res.json(reviews);
   }, function(err) {
     next(err);
