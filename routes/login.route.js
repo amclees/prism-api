@@ -1,14 +1,17 @@
-const mongoose = require('mongoose');
-const express = require('express');
-const User = mongoose.model('User');
-const Group = mongoose.model('Group');
-const jwt = require('jsonwebtoken');
-const router = express.Router();
-const jwtSecret = process.env.JWT_SECRET || 'secret';
 const _ = require('lodash');
+const jwt = require('jsonwebtoken');
 const winston = require('winston');
 
+const express = require('express');
+const router = express.Router();
+
+const mongoose = require('mongoose');
+const User = mongoose.model('User');
+const Group = mongoose.model('Group');
+
 const tokenCache = require('../lib/token_cache');
+
+const jwtSecret = process.env.JWT_SECRET || 'secret';
 
 router.post('/login', function(req, res, next) {
   if (!req.body.username || !req.body.password) {

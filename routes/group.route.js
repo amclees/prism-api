@@ -1,4 +1,5 @@
 const winston = require('winston');
+
 const express = require('express');
 const router = express.Router();
 
@@ -7,7 +8,6 @@ const Group = mongoose.model('Group');
 const User = mongoose.model('User');
 
 const actionLogger = require('../lib/action_logger');
-
 const access = require('../lib/access');
 
 router.route('/group/:group_id')

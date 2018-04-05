@@ -1,5 +1,6 @@
-const winston = require('winston');
 const _ = require('lodash');
+const winston = require('winston');
+
 const express = require('express');
 const router = express.Router();
 
@@ -7,11 +8,10 @@ const mongoose = require('mongoose');
 const Document = mongoose.model('Document');
 const Review = mongoose.model('Review');
 
-const documentFactory = require('../lib/document_factory');
-const reviewFactory = require('../lib/review_factory');
-
 const access = require('../lib/access');
 const actionLogger = require('../lib/action_logger');
+const documentFactory = require('../lib/document_factory');
+const reviewFactory = require('../lib/review_factory');
 
 router.route('/review/:review_id')
     .get(function(req, res, next) {

@@ -1,7 +1,8 @@
-const winston = require('winston');
 const _ = require('lodash');
 const multer = require('multer');
 const path = require('path');
+const winston = require('winston');
+
 const express = require('express');
 const router = express.Router();
 
