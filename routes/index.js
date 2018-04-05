@@ -11,6 +11,5 @@ module.exports = [
   require('./resource.route'),
   require('./review.route'),
   require('./template.route'),
-  require('./test_endpoint'),
   require('./user.route')
 ];
