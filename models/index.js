@@ -4,6 +4,7 @@ exports.Department = require('./department.model');
 exports.Document = require('./document.model');
 exports.Group = require('./group.model');
 exports.Event = require('./event.model');
+exports.ExternalUpload = require('./external_upload.model');
 exports.Program = require('./program.model');
 exports.Resource = require('./resource.model');
 exports.Review = require('./review.model');
