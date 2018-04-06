@@ -33,7 +33,8 @@ const eventSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }]
-});
+},
+                                        {usePushEach: true});
 
 eventSchema.methods.addDocument = function(title) {
   return new Promise((resolve, reject) => {
