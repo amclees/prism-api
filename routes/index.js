@@ -4,6 +4,7 @@ module.exports = [
   require('./department.route'),
   require('./document.route'),
   require('./event.route'),
+  require('./external_upload.route.js'),
   require('./file_manager.route'),
   require('./group.route'),
   require('./login.route'),
