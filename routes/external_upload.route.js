@@ -42,7 +42,7 @@ router.route('/external-upload/:token')
     })
     .post(function(req, res, next) {
       ExternalUpload.findOne({token: req.params.token}).populate('user').then(function(externalUpload) {
-        if (externalUpload == null) {
+        if (externalUpload === null) {
           next();
           return;
         }
@@ -51,7 +51,7 @@ router.route('/external-upload/:token')
           return;
         }
         Document.findById(externalUpload.document).then(function(document) {
-          if (document == null) {
+          if (document === null) {
             winston.error('Document null in ExternalUpload', externalUpload._id);
             res.sendStatus(500);
             return;
@@ -66,7 +66,10 @@ router.route('/external-upload/:token')
             document.revisions[0].filename = req.file.filename;
             document.revisions[0].originalFilename = req.file.originalname;
             document.save().then(function() {
-              res.sendStatus(200);
+              externalUpload.completed = true;
+              externalUpload.save().then(function() {
+                res.sendStatus(200);
+              }, next);
             }, function(err) {
               next(err);
               winston.error('Error saving document after file upload', err);
