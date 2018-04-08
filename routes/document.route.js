@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const crypto = require('crypto');
 const multer = require('multer');
 const path = require('path');
 const winston = require('winston');
@@ -8,6 +9,8 @@ const router = express.Router();
 
 const mongoose = require('mongoose');
 const Document = mongoose.model('Document');
+const ExternalUpload = mongoose.model('ExternalUpload');
+const User = mongoose.model('User');
 
 const access = require('../lib/access');
 const actionLogger = require('../lib/action_logger');
@@ -286,5 +289,49 @@ router.post('/document/:document_id/revision', allowDocumentGroups, function(req
 
 router.post('/document/:id/subscribe', subscribeMiddlewareFactory.getSubscribeMiddleware('Document', true));
 router.post('/document/:id/unsubscribe', subscribeMiddlewareFactory.getSubscribeMiddleware('Document', false));
+
+router.post('/document/:document_id/external-upload', access.allowGroups(['Administrators']), function(req, res, next) {
+  if (!req.body.user) {
+    res.sendStatus(400);
+    return;
+  }
+  (new User({
+    'username': req.body.user.username,
+    'name': req.body.user.name,
+    'email': req.body.user.email,
+    'groups': [],
+    'internal': true,
+    'disabled': true
+  })).save()
+      .then(function(newUser) {
+        Document.count({_id: req.params.document_id}).then(function(count) {
+          if (count !== 1) {
+            next();
+            return;
+          }
+          // The token should be 64 digits hex which is 32 bytes
+          crypto.randomBytes(32, function(cryptoErr, buffer) {
+            if (cryptoErr) {
+              next(cryptoErr);
+            }
+            const generatedToken = buffer.toString('hex');
+            (new ExternalUpload({
+              document: req.params.document_id,
+              user: newUser._id,
+              token: generatedToken
+            })).save()
+                .then(function(externalUpload) {
+                  // Only administrators create external uploads, so it is acceptable for them to receive the token
+                  res.json(externalUpload);
+                  winston.info(`Created new external upload ${externalUpload._id} with document ${externalUpload.document} and user ${externalUpload.user}`);
+                }, function(err) {
+                  newUser.remove().then(function() {
+                    next(err);
+                  }, next);
+                });
+          });
+        }, next);
+      }, next);
+});
 
 module.exports = router;

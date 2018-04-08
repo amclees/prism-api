@@ -27,7 +27,7 @@ router.route('/review/:review_id')
     })
     .patch(function(req, res, next) {
       for (let property of _.keys(req.body)) {
-        if (['program', 'leadReviewers', 'externalReviewers'].indexOf(property) === -1) {
+        if (['program', 'leadReviewers'].indexOf(property) === -1) {
           res.sendStatus(400);
           return;
         }

@@ -25,7 +25,7 @@ const reviewSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-  externalReviewers: [{
+  externalUploads: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
@@ -38,7 +38,8 @@ const reviewSchema = new mongoose.Schema({
     default: {}
   },
   deleted: Boolean
-}, {usePushEach: true});
+},
+                                         {usePushEach: true});
 
 reviewSchema.path('nodes').validate({
   validator: nodeValidator,
