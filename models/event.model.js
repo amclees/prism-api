@@ -1,8 +1,10 @@
 'use strict';
 
 const mongoose = require('mongoose');
-
 const Document = mongoose.model('Document');
+const User = mongoose.model('User');
+const nodemailer = require('nodemailer');
+const hbs = require('nodemailer-express-handlebars');
 
 const eventSchema = new mongoose.Schema({
   title: {
@@ -72,15 +74,116 @@ eventSchema.methods.deleteDocument = function(document) {
 eventSchema.methods.changeDate = function(newDate, sendNotifications = true) {
   this.date = newDate;
   if (sendNotifications && this.notifications.change) {
-    // Send the notifications via the email manager
+    User.find({}, (err,users) => {
+      if(err) {
+        console.log("error");
+      }
+    users.forEach(function(user) {
+      nodemailer.createTestAccount((err, account) => {
+        if (err) {
+            console.error('Failed to create a testing account. ' + err.message);
+            return process.exit(1);
+        }
+
+        console.log('Credentials obtained, sending message...');
+
+
+        let transporter = nodemailer.createTransport({
+            host: account.smtp.host,
+            port: account.smtp.port,
+            secure: account.smtp.secure,
+            auth: {
+                user: account.user,
+                pass: account.pass
+            }
+        });
+        transporter.use('compile', hbs ({
+            viewPath: 'templates',
+            extName: '.hbs'
+        }));
+
+
+        let message = {
+            from: 'allen3just@yahoo.com',
+            to: `${user.email}`,
+            subject: 'Event Date Changed',
+            template: '../lib/templates/event_change_date',
+            context: {
+              title: this.title
+            }
+        };
+
+        transporter.sendMail(message, (err, info) => {
+            if (err) {
+                console.log('Error occurred. ' + err.message);
+                return process.exit(1);
+            }
+
+            console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+        });
+    });
   }
+);
+});
+}
 };
 
 eventSchema.methods.cancel = function() {
   this.canceled = true;
   if (this.notifications.change) {
-    // Send the notifications via the email manager
+    User.find({}, (err,users) => {
+      if(err) {
+        console.log("error");
+      }
+    users.forEach(function(user) {
+      nodemailer.createTestAccount((err, account) => {
+        if (err) {
+            console.error('Failed to create a testing account. ' + err.message);
+            return process.exit(1);
+        }
+
+        console.log('Credentials obtained, sending message...');
+
+
+        let transporter = nodemailer.createTransport({
+            host: account.smtp.host,
+            port: account.smtp.port,
+            secure: account.smtp.secure,
+            auth: {
+                user: account.user,
+                pass: account.pass
+            }
+        });
+        transporter.use('compile', hbs ({
+            viewPath: 'templates',
+            extName: '.hbs'
+        }));
+
+        let
+
+        let message = {
+            from: 'allen3just@yahoo.com',
+            to: `${user.email}`,
+            subject: 'Event Cancelled',
+            template: '../lib/templates/event_cancel',
+            context: {
+
+            }
+        };
+
+        transporter.sendMail(message, (err, info) => {
+            if (err) {
+                console.log('Error occurred. ' + err.message);
+                return process.exit(1);
+            }
+
+            console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+        });
+    });
   }
+);
+});
+}
 };
 
 module.exports = mongoose.model('Event', eventSchema);

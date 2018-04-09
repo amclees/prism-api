@@ -31,9 +31,10 @@ const resourceSchema = new mongoose.Schema({
     default: []
   },
   groups: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Group'
+    type: [String],
+    default: ['Administrators']
   }
+
 
 
 },                                  {usePushEach: true});
