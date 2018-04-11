@@ -97,10 +97,10 @@ router.post('/review/:review_id/node/:node_id/finalize', function(req, res, next
         return;
       }
       const node = review.nodes[req.params.node_id];
-      node.finalized = true;
       node.finishDateOverriden = true;
       node.finishDate = new Date();
       review.recalculateDates();
+      node.finalized = true;
       review.markModified('nodes');
       review.save().then(function() {
         res.json(review);
