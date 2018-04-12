@@ -318,7 +318,8 @@ router.post('/document/:document_id/external-upload', access.allowGroups(['Admin
             (new ExternalUpload({
               document: req.params.document_id,
               user: newUser._id,
-              token: generatedToken
+              token: generatedToken,
+              message: req.body.message
             })).save()
                 .then(function(externalUpload) {
                   // Only administrators create external uploads, so it is acceptable for them to receive the token
