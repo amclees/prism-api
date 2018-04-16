@@ -37,9 +37,10 @@ const upload =
     }).single('file');
 
 const allowDocumentGroups = access.allowDatabaseGroups('Document', 'document_id', 'groups');
+const allowDocumentDownloadGroups = access.allowDatabaseGroups('Document', 'document_id', 'downloadGroups');
 
 router.route('/document/:document_id')
-    .get(allowDocumentGroups, function(req, res) {
+    .get(access.composeOr(allowDocumentGroups, allowDocumentDownloadGroups), function(req, res) {
       res.json(req.document.excludeFields());
     })
     .patch(allowDocumentGroups, function(req, res, next) {
