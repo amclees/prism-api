@@ -16,7 +16,7 @@ module.exports = function() {
       const userFactory = require('../lib/user_factory');
 
       createCoreTemplates().then(function() {
-        createGroups(['Administrators', 'Program Review Subcommittee']).then(function() {
+        createGroups(['Administrators', 'Program Review Subcommittee', 'University']).then(function() {
 
           userFactory.getUser({
                        username: 'root',
