@@ -291,6 +291,12 @@ router.post('/document/:document_id/revision', allowDocumentGroups, function(req
 router.post('/document/:id/subscribe', subscribeMiddlewareFactory.getSubscribeMiddleware('Document', true));
 router.post('/document/:id/unsubscribe', subscribeMiddlewareFactory.getSubscribeMiddleware('Document', false));
 
+router.get('/document/:document_id/external-uploads', access.allowGroups(['Administrators']), function(req, res, next) {
+  ExternalUpload.find({document: req.params.document_id}).populate('user').then(function(externalUploads) {
+    res.json(externalUploads);
+  }, next);
+});
+
 router.post('/document/:document_id/external-upload', access.allowGroups(['Administrators']), function(req, res, next) {
   if (!req.body.user) {
     res.sendStatus(400);
