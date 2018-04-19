@@ -32,7 +32,7 @@ app.use(passport.initialize());
 const authMiddleware = passport.authenticate('jwt', {session: false});
 
 app.use(function(req, res, next) {
-  if (req.path === '/api/login' || req.path.indexOf('/external-upload') === 0) {
+  if (req.path === '/api/login' || req.path.indexOf('/api/external-upload') === 0) {
     next();
   } else {
     authMiddleware(req, res, next);
