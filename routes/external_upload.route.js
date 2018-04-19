@@ -46,7 +46,7 @@ router.route('/external-upload/:token')
           next();
           return;
         }
-        if (externalUpload.completed) {
+        if (externalUpload.completed || externalUpload.disabled) {
           res.sendStatus(400);
           return;
         }
@@ -78,5 +78,15 @@ router.route('/external-upload/:token')
         });
       });
     });
+
+router.post('/external-upload/:token/cancel', function(req, res, next) {
+  ExternalUpload.findOneAndUpdate({token: req.params.token}, {$set: {disabled: true}}, {new: true}).then(function(externalUpload) {
+    if (externalUpload === null) {
+      next();
+      return;
+    }
+    res.json(externalUpload);
+  }, next);
+});
 
 module.exports = router;

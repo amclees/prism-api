@@ -23,7 +23,8 @@ const externalUploadSchema = new mongoose.Schema({
     required: true,
     ref: 'Document'
   },
-  completed: Boolean
+  completed: Boolean,
+  disabled: Boolean
 },
                                                  {usePushEach: true});
 
