@@ -13,13 +13,20 @@ const actionLogger = require('../lib/action_logger');
 const documentFactory = require('../lib/document_factory');
 const reviewFactory = require('../lib/review_factory');
 
+const excludePopulatedFields = function(review) {
+  for (let i = 0; i < review.leadReviewers.length; i++) {
+    review.leadReviewers[i] = review.leadReviewers[i].excludeFields();
+  }
+};
+
 router.route('/review/:review_id')
     .get(function(req, res, next) {
-      Review.findById(req.params.review_id).populate('program').then(function(review) {
+      Review.findById(req.params.review_id).populate('program').populate('leadReviewers').then(function(review) {
         if (review === null || review.deleted) {
           next();
           return;
         }
+        excludePopulatedFields(review);
         res.json(review);
       }, function(err) {
         next(err);
@@ -191,7 +198,8 @@ router.get('/reviews', access.allowGroups(['Administrators', 'Program Review Sub
     query.deleted = null;
   }
 
-  Review.find(query).exec().then(function(reviews) {
+  Review.find(query).populate('leadReviewers').exec().then(function(reviews) {
+    reviews.forEach(excludePopulatedFields);
     res.json(reviews);
   }, function(err) {
     next(err);
