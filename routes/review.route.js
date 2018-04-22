@@ -193,12 +193,7 @@ router.post('/review/:review_id/node', function(req, res, next) {
 });
 
 router.get('/reviews', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
-  const query = {};
-  if (!req.user.root && req.groups.indexOf(access.groupNameToId['Administrators']) === -1) {
-    query.deleted = null;
-  }
-
-  Review.find(query).populate('leadReviewers').exec().then(function(reviews) {
+  Review.find().populate('leadReviewers').exec().then(function(reviews) {
     reviews.forEach(excludePopulatedFields);
     res.json(reviews);
   }, function(err) {
