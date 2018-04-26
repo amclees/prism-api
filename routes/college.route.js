@@ -11,8 +11,7 @@ const access = require('../lib/access');
 const actionLogger = require('../lib/action_logger');
 
 router.route('/college/:college_id')
-    .all(access.allowGroups(['Administrators']))
-    .get(function(req, res, next) {
+    .get(access.allowGroups(['Administrators', 'Program Review Subcommittee', 'University']), function(req, res, next) {
       College.findById(req.params.college_id).populate('deans').then(function(college) {
         if (college === null) {
           next();
@@ -26,7 +25,7 @@ router.route('/college/:college_id')
         next(err);
       });
     })
-    .patch(function(req, res, next) {
+    .patch(access.allowGroups(['Administrators']), function(req, res, next) {
       College.findByIdAndUpdate(req.params.college_id, {$set: req.body}, {new: true, runValidators: true}).then(function(updatedCollege) {
         if (updatedCollege === null) {
           next();
@@ -39,7 +38,7 @@ router.route('/college/:college_id')
         next(err);
       });
     })
-    .delete(function(req, res, next) {
+    .delete(access.allowGroups(['Administrators']), function(req, res, next) {
       Department.find({college: req.params.college_id}).then(function(dependents) {
         if (dependents.length === 0) {
           College.findByIdAndRemove(req.params.college_id).then(function(removedDocument) {
@@ -75,7 +74,7 @@ router.route('/college').post(access.allowGroups(['Administrators']), function(r
 });
 
 router.route('/college/:college_id/departments')
-    .get(access.allowGroups(['Administrators']), function(req, res, next) {
+    .get(access.allowGroups(['Administrators', 'Program Review Subcommittee', 'University']), function(req, res, next) {
       Department.find({college: req.params.college_id}).populate('chairs').then(function(departments) {
         for (let department of departments) {
           for (let i = 0; i < department.chairs.length; i++) {
@@ -88,7 +87,7 @@ router.route('/college/:college_id/departments')
       });
     });
 
-router.get('/colleges', access.allowGroups(['Administrators']), function(req, res, next) {
+router.get('/colleges', access.allowGroups(['Administrators', 'Program Review Subcommittee', 'University']), function(req, res, next) {
   College.find().populate('deans').exec().then(function(colleges) {
     for (let college of colleges) {
       for (let i = 0; i < college.deans.length; i++) {
