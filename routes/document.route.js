@@ -67,19 +67,6 @@ router.route('/document/:document_id')
       }, next);
     });
 
-// POST endpoint here is for testing, the final application will post to a review or event based endpoint
-router.route('/document').post(function(req, res, next) {
-  Document.create(req.body).then(function(newDocument) {
-    res.status(201);
-    res.json(newDocument.excludeFields());
-    winston.info(`Created document with id ${newDocument._id}`);
-    actionLogger.log(`created a new document`, req.user, 'document', newDocument._id, newDocument.title);
-  }, function(err) {
-    next(err);
-    winston.info('Failed to create document with body:', req.body);
-  });
-});
-
 router.route('/document/:document_id/comment/:comment_id')
     .patch(allowDocumentGroups, function(req, res, next) {
       Document.findById(req.params.document_id).then(function(document) {
