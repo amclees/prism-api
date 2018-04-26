@@ -146,8 +146,7 @@ router.route('/document/:document_id/comment').post(allowDocumentGroups, functio
 });
 
 router.route('/document/:document_id/revision/:revision/file')
-    .all(allowDocumentGroups)
-    .get(function(req, res, next) {
+    .get(access.composeOr(allowDocumentGroups, allowDocumentDownloadGroups), function(req, res, next) {
       const document = req.document;
       if (document === null || !document.validRevision(req.params.revision) || document.revisions[req.params.revision].filename === null) {
         next();
@@ -161,7 +160,7 @@ router.route('/document/:document_id/revision/:revision/file')
       };
       res.sendFile(document.revisions[req.params.revision].filename, options);
     })
-    .post(function(req, res, next) {
+    .post(allowDocumentGroups, function(req, res, next) {
       const document = req.document;
       if (document === null || !document.validRevision(req.params.revision)) {
         next();
