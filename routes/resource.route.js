@@ -11,7 +11,7 @@ const Resource = mongoose.model('Resource');
 const access = require('../lib/access');
 const settings = require('../lib/config/settings');
 
-const allowDocumentGroups = access.allowDatabaseGroups('Resource', 'resource_id', 'groups');
+const allowDocumentGroups = access.allowDatabaseGroups('Resource', 'resource_id', 'groups', '__unused_groups__', ['Administrators']);
 const upload =
     multer({
       storage: multer.diskStorage({

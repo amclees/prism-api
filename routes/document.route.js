@@ -36,8 +36,8 @@ const upload =
       }
     }).single('file');
 
-const allowDocumentGroups = access.allowDatabaseGroups('Document', 'document_id', 'groups');
-const allowDocumentDownloadGroups = access.allowDatabaseGroups('Document', 'document_id', 'downloadGroups');
+const allowDocumentGroups = access.allowDatabaseGroups('Document', 'document_id', 'groups', 'template', ['Administrators']);
+const allowDocumentDownloadGroups = access.allowDatabaseGroups('Document', 'document_id', 'downloadGroups', '__unused_groups__', ['Administrators']);
 
 router.route('/document/:document_id')
     .get(access.composeOr(allowDocumentGroups, allowDocumentDownloadGroups), function(req, res) {
