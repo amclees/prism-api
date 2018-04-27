@@ -46,7 +46,7 @@ router.route('/resource/:resource_id')
       });
     });
 
-router.route('/resource').post(access.allowGroups(['Administrators']), function(req, res, next) {
+router.route('/resource').post(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   Resource.create({title: req.body.title, uploader: req.user}).then(function(newResource) {
     res.json(newResource);
     winston.info(`Created resource with id ${newResource._id}`);
@@ -78,7 +78,7 @@ router.route('/resource/:resource_id/files/:files/file')
       };
       res.sendFile(resource.files[req.params.files].filename, options);
     })
-    .post(access.allowGroups(['Administrators']), function(req, res, next) {
+    .post(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
       Resource.findById(req.params.resource_id).then(function(resource) {
         upload(req, res, function(multerError) {
           if (multerError) {
@@ -119,7 +119,7 @@ router.post('/resource/:resource_id/files', allowDocumentGroups, function(req, r
 });
 
 
-router.route('/resources').get(access.allowGroups(['Administrators']), function(req, res, next) {
+router.route('/resources').get(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   Resource.find({}).exec().then(function(resources) {
     res.json(resources);
   }, function(err) {
