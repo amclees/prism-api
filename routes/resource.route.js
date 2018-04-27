@@ -46,7 +46,7 @@ router.route('/resource/:resource_id')
       });
     });
 
-router.route('/resource').post(function(req, res, next) {
+router.route('/resource').post(access.allowGroups(['Administrators']), function(req, res, next) {
   Resource.create({title: req.body.title, uploader: req.user}).then(function(newResource) {
     res.json(newResource);
     winston.info(`Created resource with id ${newResource._id}`);
