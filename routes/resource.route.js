@@ -46,7 +46,6 @@ router.route('/resource/:resource_id')
       });
     });
 
-//test resource
 router.route('/resource').post(function(req, res, next) {
   Resource.create({title: req.body.title, uploader: req.user}).then(function(newResource) {
     res.json(newResource);
