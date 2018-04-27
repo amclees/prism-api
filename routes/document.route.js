@@ -37,10 +37,18 @@ const upload =
     }).single('file');
 
 const allowDocumentGroups = access.allowDatabaseGroups('Document', 'document_id', 'groups', 'template', ['Administrators']);
-const allowDocumentDownloadGroups = access.allowDatabaseGroups('Document', 'document_id', 'downloadGroups', '__unused_groups__', ['Administrators']);
+const allowDocumentDownloadGroups = access.allowDatabaseGroups('Document', 'document_id', 'downloadGroups', '__unused_groups__', ['Administrators'], 'downloadGroup');
 
 router.route('/document/:document_id')
     .get(access.composeOr(allowDocumentGroups, allowDocumentDownloadGroups), function(req, res) {
+      if (req.downloadGroup) {
+        const excludedDocument = req.document.excludeFields();
+        res.json({
+          'title': excludedDocument.title,
+          'revisions': excludedDocument.revisions[excludedDocument.revisions.length - 1]
+        });
+        return;
+      }
       res.json(req.document.excludeFields());
     })
     .patch(allowDocumentGroups, function(req, res, next) {
