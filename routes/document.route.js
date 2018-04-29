@@ -41,11 +41,14 @@ const allowDocumentDownloadGroups = access.allowDatabaseGroups('Document', 'docu
 
 router.route('/document/:document_id')
     .get(access.composeOr(allowDocumentGroups, allowDocumentDownloadGroups), function(req, res) {
-      if (req.downloadGroup) {
+      if (req.downloadGroup && req.document.locked) {
         const excludedDocument = req.document.excludeFields();
         res.json({
+          '_id': excludedDocument._id,
           'title': excludedDocument.title,
-          'revisions': excludedDocument.revisions[excludedDocument.revisions.length - 1]
+          'revisions': [excludedDocument.revisions[excludedDocument.revisions.length - 1]],
+          'downloadOnly': true,
+          'locked': true
         });
         return;
       }
