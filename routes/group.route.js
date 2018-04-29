@@ -11,7 +11,7 @@ const actionLogger = require('../lib/action_logger');
 const access = require('../lib/access');
 
 router.route('/group/:group_id')
-    .all(access.allowGroups(['Administrators']))
+    .all(access.allowGroups(['Administrators', 'Program Review Subcommittee']))
     .get(function(req, res, next) {
       Group.findById(req.params.group_id).then(function(group) {
         if (group === null) {
@@ -183,7 +183,7 @@ router.get('/prs', function(req, res, next) {
   });
 });
 
-router.get('/groups', access.allowGroups(['Administrators']), function(req, res, next) {
+router.get('/groups', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   Group.find().exec().then(function(groups) {
     res.json(groups);
   }, function(err) {
