@@ -40,7 +40,7 @@ const allowDocumentGroups = access.allowDatabaseGroups('Document', 'document_id'
 const allowDocumentDownloadGroups = access.allowDatabaseGroups('Document', 'document_id', 'downloadGroups', '__unused_groups__', ['Administrators'], 'downloadGroup');
 
 router.route('/document/:document_id')
-    .get(access.composeOr(allowDocumentGroups, allowDocumentDownloadGroups), function(req, res) {
+    .get(access.composeOr(allowDocumentGroups, allowDocumentDownloadGroups), function(req, res, next) {
       if (req.downloadGroup && req.document.locked) {
         const excludedDocument = req.document.excludeFields();
         res.json({
@@ -50,6 +50,9 @@ router.route('/document/:document_id')
           'downloadOnly': true,
           'locked': true
         });
+        return;
+      } else if (req.downloadGroup) {
+        next(new Error('Forbidden'));
         return;
       }
       res.json(req.document.excludeFields());
