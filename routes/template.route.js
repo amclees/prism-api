@@ -17,7 +17,9 @@ router.post('/template', access.allowGroups(['Administrators']), function(req, r
   Document.create({
             title: req.body.title,
             template: true,
-            completionEstimate: req.body.completionEstimate
+            completionEstimate: req.body.completionEstimate,
+            groups: req.body.groups || ['Administrators'],
+            downloadGroups: req.body.downloadGroups || []
           })
       .then(function(newDocument) {
         res.status(201);

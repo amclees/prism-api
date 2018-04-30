@@ -9,6 +9,7 @@ const mongoose = require('mongoose');
 const Document = mongoose.model('Document');
 const ExternalUpload = mongoose.model('ExternalUpload');
 
+const access = require('../lib/access');
 const settings = require('../lib/config/settings');
 
 const upload =
@@ -31,7 +32,7 @@ const upload =
     }).single('file');
 
 router.route('/external-upload/:token')
-    .get(function(req, res, next) {
+    .get(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
       ExternalUpload.findOne({token: req.params.token}).populate('user').populate('document').then(function(externalUpload) {
         if (externalUpload === null) {
           next();
@@ -40,7 +41,7 @@ router.route('/external-upload/:token')
         res.json(externalUpload);
       }, next);
     })
-    .post(function(req, res, next) {
+    .post(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
       ExternalUpload.findOne({token: req.params.token}).populate('user').then(function(externalUpload) {
         if (externalUpload === null) {
           next();
@@ -79,7 +80,7 @@ router.route('/external-upload/:token')
       });
     });
 
-router.post('/external-upload/:token/cancel', function(req, res, next) {
+router.post('/external-upload/:token/cancel', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   ExternalUpload.findOneAndUpdate({token: req.params.token}, {$set: {disabled: true}}, {new: true}).then(function(externalUpload) {
     if (externalUpload === null) {
       next();

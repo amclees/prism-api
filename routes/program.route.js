@@ -11,8 +11,7 @@ const access = require('../lib/access');
 const actionLogger = require('../lib/action_logger');
 
 router.route('/program/:program_id')
-    .all(access.allowGroups(['Administrators']))
-    .get(function(req, res, next) {
+    .get(access.allowGroups(['Administrators', 'Program Review Subcommittee', 'University']), function(req, res, next) {
       Program.findById(req.params.program_id).then(function(program) {
         if (program === null) {
           next();
@@ -23,7 +22,7 @@ router.route('/program/:program_id')
         next(err);
       });
     })
-    .patch(function(req, res, next) {
+    .patch(access.allowGroups(['Administrators']), function(req, res, next) {
       Program.findByIdAndUpdate(req.params.program_id, {$set: req.body}, {new: true, runValidators: true}).then(function(updatedProgram) {
         if (updatedProgram === null) {
           next();
@@ -36,7 +35,7 @@ router.route('/program/:program_id')
         next(err);
       });
     })
-    .delete(function(req, res, next) {
+    .delete(access.allowGroups(['Administrators']), function(req, res, next) {
       Review.find({program: req.params.program_id}).then(function(dependents) {
         if (dependents.length === 0) {
           Program.findByIdAndRemove(req.params.program_id).then(function(removedDocument) {
@@ -59,7 +58,7 @@ router.route('/program/:program_id')
       });
     });
 
-router.get('/program/:program_id/reviews', access.allowGroups(['Administrators']), function(req, res, next) {
+router.get('/program/:program_id/reviews', access.allowGroups(['Administrators', 'Program Review Subcommittee', 'University']), function(req, res, next) {
   Review.find({program: req.params.program_id}).then(function(dependents) {
     if (!dependents || dependents.length === 0) {
       res.json([]);
@@ -81,7 +80,7 @@ router.route('/program').post(access.allowGroups(['Administrators']), function(r
   });
 });
 
-router.get('/programs', access.allowGroups(['Administrators']), function(req, res, next) {
+router.get('/programs', access.allowGroups(['Administrators', 'Program Review Subcommittee', 'University']), function(req, res, next) {
   Program.find().exec().then(function(programs) {
     res.json(programs);
   }, function(err) {

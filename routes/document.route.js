@@ -36,11 +36,25 @@ const upload =
       }
     }).single('file');
 
-const allowDocumentGroups = access.allowDatabaseGroups('Document', 'document_id', 'groups');
-const allowDocumentDownloadGroups = access.allowDatabaseGroups('Document', 'document_id', 'downloadGroups');
+const allowDocumentGroups = access.allowDatabaseGroups('Document', 'document_id', 'groups', 'template', ['Administrators']);
+const allowDocumentDownloadGroups = access.allowDatabaseGroups('Document', 'document_id', 'downloadGroups', '__unused_groups__', ['Administrators'], 'downloadGroup');
 
 router.route('/document/:document_id')
-    .get(access.composeOr(allowDocumentGroups, allowDocumentDownloadGroups), function(req, res) {
+    .get(access.composeOr(allowDocumentGroups, allowDocumentDownloadGroups), function(req, res, next) {
+      if (req.downloadGroup && req.document.locked) {
+        const excludedDocument = req.document.excludeFields();
+        res.json({
+          '_id': excludedDocument._id,
+          'title': excludedDocument.title,
+          'revisions': [excludedDocument.revisions[excludedDocument.revisions.length - 1]],
+          'downloadOnly': true,
+          'locked': true
+        });
+        return;
+      } else if (req.downloadGroup) {
+        next(new Error('Forbidden'));
+        return;
+      }
       res.json(req.document.excludeFields());
     })
     .patch(allowDocumentGroups, function(req, res, next) {
@@ -66,19 +80,6 @@ router.route('/document/:document_id')
         actionLogger.log(`renamed a document to`, req.user, 'document', document._id, document.title);
       }, next);
     });
-
-// POST endpoint here is for testing, the final application will post to a review or event based endpoint
-router.route('/document').post(function(req, res, next) {
-  Document.create(req.body).then(function(newDocument) {
-    res.status(201);
-    res.json(newDocument.excludeFields());
-    winston.info(`Created document with id ${newDocument._id}`);
-    actionLogger.log(`created a new document`, req.user, 'document', newDocument._id, newDocument.title);
-  }, function(err) {
-    next(err);
-    winston.info('Failed to create document with body:', req.body);
-  });
-});
 
 router.route('/document/:document_id/comment/:comment_id')
     .patch(allowDocumentGroups, function(req, res, next) {
@@ -159,8 +160,7 @@ router.route('/document/:document_id/comment').post(allowDocumentGroups, functio
 });
 
 router.route('/document/:document_id/revision/:revision/file')
-    .all(allowDocumentGroups)
-    .get(function(req, res, next) {
+    .get(access.composeOr(allowDocumentGroups, allowDocumentDownloadGroups), function(req, res, next) {
       const document = req.document;
       if (document === null || !document.validRevision(req.params.revision) || document.revisions[req.params.revision].filename === null) {
         next();
@@ -174,7 +174,7 @@ router.route('/document/:document_id/revision/:revision/file')
       };
       res.sendFile(document.revisions[req.params.revision].filename, options);
     })
-    .post(function(req, res, next) {
+    .post(allowDocumentGroups, function(req, res, next) {
       const document = req.document;
       if (document === null || !document.validRevision(req.params.revision)) {
         next();

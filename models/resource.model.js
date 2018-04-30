@@ -1,7 +1,6 @@
 'use strict';
 
 const mongoose = require('mongoose');
-const _ = require('lodash');
 
 const resourceSchema = new mongoose.Schema({
   title: {
@@ -31,8 +30,8 @@ const resourceSchema = new mongoose.Schema({
     default: []
   },
   groups: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Group'
+    type: [String],
+    default: ['Administrators', 'Program Review Subcommittee']
   }
 
 

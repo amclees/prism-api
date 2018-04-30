@@ -78,7 +78,11 @@ const documentSchema = new mongoose.Schema({
   locked: Boolean,
   groups: {
     type: [String],
-    default: ['Administrators']
+    default: ['Administrators', 'Program Review Subcommittee']
+  },
+  downloadGroups: {
+    type: [String],
+    default: []
   }
 },
                                            {usePushEach: true});

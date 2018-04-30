@@ -39,7 +39,8 @@ const eventSchema = new mongoose.Schema({
 eventSchema.methods.addDocument = function(title) {
   return new Promise((resolve, reject) => {
     Document.create({
-              'title': title
+              'title': title,
+              'groups': ['Administrators', 'Program Review Subcommittee']
             })
         .then((createdDocument) => {
           this.documents.push(createdDocument._id);

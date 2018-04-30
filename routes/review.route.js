@@ -20,7 +20,7 @@ const excludePopulatedFields = function(review) {
 };
 
 router.route('/review/:review_id')
-    .get(function(req, res, next) {
+    .get(access.allowGroups(['Administrators', 'Program Review Subcommittee', 'University']), function(req, res, next) {
       Review.findById(req.params.review_id).populate('program').populate('leadReviewers').then(function(review) {
         if (review === null || review.deleted) {
           next();
@@ -32,7 +32,7 @@ router.route('/review/:review_id')
         next(err);
       });
     })
-    .patch(function(req, res, next) {
+    .patch(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
       for (let property of _.keys(req.body)) {
         if (['program', 'leadReviewers'].indexOf(property) === -1) {
           res.sendStatus(400);
@@ -51,7 +51,7 @@ router.route('/review/:review_id')
         next(err);
       });
     })
-    .delete(function(req, res, next) {
+    .delete(access.allowGroups(['Administrators']), function(req, res, next) {
       Review.findByIdAndUpdate(req.params.review_id, {deleted: true}).then(function(review) {
         if (review === null) {
           res.sendStatus(404);
@@ -62,7 +62,7 @@ router.route('/review/:review_id')
       }, next);
     });
 
-router.post('/review/:review_id/restore', function(req, res, next) {
+router.post('/review/:review_id/restore', access.allowGroups(['Administrators']), function(req, res, next) {
   Review.findByIdAndUpdate(req.params.review_id, {deleted: null}).then(function(review) {
     if (review === null) {
       res.sendStatus(404);
@@ -73,7 +73,7 @@ router.post('/review/:review_id/restore', function(req, res, next) {
   }, next);
 });
 
-router.route('/review').post(function(req, res, next) {
+router.route('/review').post(access.allowGroups(['Administrators']), function(req, res, next) {
   reviewFactory.getReview(req.body).then(function(newReview) {
     newReview.recalculateDates();
     newReview.save().then(function() {
@@ -88,7 +88,7 @@ router.route('/review').post(function(req, res, next) {
   });
 });
 
-router.post('/review/:review_id/node/:node_id/finalize', function(req, res, next) {
+router.post('/review/:review_id/node/:node_id/finalize', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   Review.findById(req.params.review_id).then(function(review) {
     if (review === null || review.deleted || !review.nodes[req.params.node_id]) {
       next();
@@ -118,7 +118,7 @@ router.post('/review/:review_id/node/:node_id/finalize', function(req, res, next
   });
 });
 
-router.patch('/review/:review_id/node/:node_id', function(req, res, next) {
+router.patch('/review/:review_id/node/:node_id', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   if (_.keys(req.body).length !== 1 || !(req.body.finishDate || req.body.finishDate === null)) {
     res.sendStatus(400);
     return;
@@ -152,7 +152,7 @@ router.patch('/review/:review_id/node/:node_id', function(req, res, next) {
   });
 });
 
-router.post('/review/:review_id/node', function(req, res, next) {
+router.post('/review/:review_id/node', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   Review.findById(req.params.review_id).then(function(review) {
     if (review === null || review.deleted) {
       next();
@@ -192,7 +192,7 @@ router.post('/review/:review_id/node', function(req, res, next) {
   });
 });
 
-router.get('/reviews', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
+router.get('/reviews', access.allowGroups(['Administrators', 'Program Review Subcommittee', 'University']), function(req, res, next) {
   Review.find().populate('leadReviewers').exec().then(function(reviews) {
     reviews.forEach(excludePopulatedFields);
     res.json(reviews);

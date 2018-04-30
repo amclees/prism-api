@@ -28,6 +28,8 @@ module.exports = function(app) {
       err.status = 400;
     } else if (err.message === 'File too large') {
       err.status = 400;
+    } else if (err.message === 'Forbidden') {
+      err.status = 403;
     }
 
     res.status(err.status || 500);
