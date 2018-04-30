@@ -33,6 +33,14 @@ app.use(passport.initialize());
 
 const authMiddleware = passport.authenticate('jwt', {session: false});
 
+app.get('*', function(req, res, next) {
+  if (req.path.indexOf('/api') === 0) {
+    next();
+  } else {
+    res.sendFile(__dirname + '/public/index.html');
+  }
+});
+
 app.use('/api/login', new RateLimit({
   windowMs: settings.rateLimitWindow,
   max: settings.loginRequestLimit,
