@@ -32,7 +32,7 @@ const upload =
     }).single('file');
 
 router.route('/external-upload/:token')
-    .get(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
+    .get(function(req, res, next) {
       ExternalUpload.findOne({token: req.params.token}).populate('user').populate('document').then(function(externalUpload) {
         if (externalUpload === null) {
           next();
@@ -41,7 +41,7 @@ router.route('/external-upload/:token')
         res.json(externalUpload);
       }, next);
     })
-    .post(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
+    .post(function(req, res, next) {
       ExternalUpload.findOne({token: req.params.token}).populate('user').then(function(externalUpload) {
         if (externalUpload === null) {
           next();
