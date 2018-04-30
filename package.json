@@ -34,6 +34,7 @@
     "dotenv": "^4.0.0",
     "email-templates": "^3.3.3",
     "express": "~4.15.5",
+    "express-rate-limit": "^2.11.0",
     "grunt": "^1.0.1",
     "handlebars": "^4.0.11",
     "jsonwebtoken": "^8.1.0",

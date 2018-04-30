@@ -1,6 +1,7 @@
 global.Promise = require('bluebird');
 
 require('dotenv').config();
+const settings = require('./lib/config/settings');
 
 require('./log.js');
 const winston = require('winston');
@@ -11,9 +12,10 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const passport = require('passport');
+var RateLimit = require('express-rate-limit');
+
 const app = express();
 app.disable('x-powered-by');
-
 
 const access = require('./lib/access');
 const db = require('./db');
@@ -30,6 +32,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(passport.initialize());
 
 const authMiddleware = passport.authenticate('jwt', {session: false});
+
+app.use('/api/login', new RateLimit({
+  windowMs: settings.rateLimitWindow,
+  max: settings.loginRequestLimit,
+  delayMs: 0
+}));
+
+app.use('/api', new RateLimit({
+  windowMs: settings.rateLimitWindow,
+  max: settings.requestLimit,
+  delayMs: 0
+}));
 
 app.use(function(req, res, next) {
   if (req.path === '/api/login' || req.path.indexOf('/api/external-upload') === 0) {
