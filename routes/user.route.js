@@ -23,11 +23,11 @@ router.route('/user/:user_id')
       });
     })
     .patch(function(req, res, next) {
+      if (!req.user._id.equals(mongoose.Types.ObjectId(req.params.user_id))) {
+        res.sendStatus(403);
+        return;
+      }
       if (req.body.password) {
-        if (!req.user._id.equals(mongoose.Types.ObjectId(req.params.user_id))) {
-          res.sendStatus(403);
-          return;
-        }
         User.findById(req.params.user_id).then(function(user) {
           user.setPassword(req.body.password).then(function() {
             const update = _.pick(req.body, ['username', 'email', 'name', 'config']);
