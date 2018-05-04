@@ -1,6 +1,6 @@
 {
   "name": "prs-api",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "CSULA PRS document review system REST API",
   "main": "index.js",
   "scripts": {
