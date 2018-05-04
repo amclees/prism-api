@@ -12,7 +12,7 @@ const actionLogger = require('../lib/action_logger');
 const subscribeMiddlewareFactory = require('../lib/subscribe_middleware_factory');
 
 router.route('/event/:event_id')
-    .get(access.allowGroups(['Administrators', 'Program Review Subcommittee', 'University']), function(req, res, next) {
+    .get(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
       Event.findById(req.params.event_id).populate('documents').then(function(event) {
         if (event === null) {
           next();
@@ -128,7 +128,7 @@ router.delete('/event/:event_id/document/:document', access.allowGroups(['Admini
   });
 });
 
-router.get('/events', access.allowGroups(['Administrators', 'Program Review Subcommittee', 'University']), function(req, res, next) {
+router.get('/events', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   Event.find().exec().then(function(events) {
     res.json(events);
   }, function(err) {
