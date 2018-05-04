@@ -1,14 +1,21 @@
-const winston = require('winston');
 const _ = require('lodash');
+const winston = require('winston');
+
 const express = require('express');
 const router = express.Router();
 
 const mongoose = require('mongoose');
 const Event = mongoose.model('Event');
+const User = mongoose.model('User');
+const Group = mongoose.model('Group');
 
 const access = require('../lib/access');
 const actionLogger = require('../lib/action_logger');
 const subscribeMiddlewareFactory = require('../lib/subscribe_middleware_factory');
+
+const nodemailer = require('nodemailer');
+const hbs = require('nodemailer-express-handlebars');
+
 
 router.route('/event/:event_id')
     .all(access.allowGroups(['Administrators']))
@@ -70,9 +77,110 @@ router.route('/event/:event_id')
 router.route('/event').post(access.allowGroups(['Administrators']), function(req, res, next) {
   Event.create({
          'title': req.body.title,
-         'date': req.body.date
+         'date': req.body.date,
+         'people': req.body.people,
+         'documents': req.body.documents,
+         'groups': req.body.groups
        })
       .then(function(newEvent) {
+        //send out email of event
+        for (let id of newEvent.people){
+          User.findById(id).then(function(user){
+            nodemailer.createTestAccount((err, account) => {
+            if (err) {
+                console.error('Failed to create a testing account. ' + err.message);
+                return process.exit(1);
+            }
+
+            console.log('Credentials obtained, sending message...');
+
+
+            let transporter = nodemailer.createTransport({
+                host: account.smtp.host,
+                port: account.smtp.port,
+                secure: account.smtp.secure,
+                auth: {
+                    user: account.user,
+                    pass: account.pass
+                }
+            });
+            transporter.use('compile', hbs ({
+                viewPath: 'templates',
+                extName: '.hbs'
+            }));
+
+
+            let message = {
+                from: 'allen3just@yahoo.com',
+                to: `${user.email}`,
+                subject: 'Event Date Changed',
+                template: '../lib/templates/event_created',
+                context: {
+                  title: newEvent.title
+                }
+            };
+
+            transporter.sendMail(message, (err, info) => {
+                if (err) {
+                    console.log('Error occurred. ' + err.message);
+                    return process.exit(1);
+                }
+
+                console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+            });
+        });
+          });
+        }
+        for(let groupid of newEvent.groups){
+          Group.findById(groupid).then(function(group){
+          for (let id of group.members){
+            User.findById(id).then(function(user){
+            nodemailer.createTestAccount((err, account) => {
+            if (err) {
+                console.error('Failed to create a testing account. ' + err.message);
+                return process.exit(1);
+            }
+
+            console.log('Credentials obtained, sending message...');
+
+
+            let transporter = nodemailer.createTransport({
+                host: account.smtp.host,
+                port: account.smtp.port,
+                secure: account.smtp.secure,
+                auth: {
+                    user: account.user,
+                    pass: account.pass
+                }
+            });
+            transporter.use('compile', hbs ({
+                viewPath: 'templates',
+                extName: '.hbs'
+            }));
+
+            let message = {
+                from: 'allen3just@yahoo.com',
+                to: `${user.email}`,
+                subject: 'Event Cancelled',
+                template: '../lib/templates/event_created',
+                context: {
+                  title: newEvent.title
+                }
+            };
+
+            transporter.sendMail(message, (err, info) => {
+                if (err) {
+                    console.log('Error occurred. ' + err.message);
+                    return process.exit(1);
+                }
+
+                console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+            });
+        });
+          });
+        }
+      });
+      }
         res.status(201);
         res.json(newEvent);
         winston.info(`Created event with id ${newEvent._id}`);
@@ -90,9 +198,11 @@ router.post('/event/:event_id/cancel', access.allowGroups(['Administrators']), f
       return;
     }
     event.cancel();
-    res.sendStatus(200);
-    winston.info(`Cancelled event with id ${req.params.event_id}`);
-    actionLogger.log(`cancelled the event`, req.user, 'event', event._id, event.title);
+    event.save().then(function() {
+      res.sendStatus(200);
+      winston.info(`Cancelled event with id ${req.params.event_id}`);
+      actionLogger.log(`cancelled the event`, req.user, 'event', event._id, event.title);
+    }, next);
   }, function(err) {
     next(err);
   });

@@ -18,7 +18,14 @@ const reviewSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  finishDate: {
+    type: Date
+  },
   leadReviewers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  externalUploads: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
@@ -31,7 +38,8 @@ const reviewSchema = new mongoose.Schema({
     default: {}
   },
   deleted: Boolean
-});
+},
+                                         {usePushEach: true});
 
 reviewSchema.path('nodes').validate({
   validator: nodeValidator,
