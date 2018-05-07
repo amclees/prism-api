@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const winston = require('winston');
+
 const express = require('express');
 const router = express.Router();
 
@@ -11,7 +12,7 @@ const tokenCache = require('../lib/token_cache');
 router.route('/user/:user_id')
     .get(function(req, res, next) {
       User.findById(req.params.user_id).then((user) => {
-        if (user === null || user.disabled) {
+        if (user === null) {
           next();
           return;
         }

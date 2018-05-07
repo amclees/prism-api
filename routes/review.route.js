@@ -1,5 +1,6 @@
-const winston = require('winston');
 const _ = require('lodash');
+const winston = require('winston');
+
 const express = require('express');
 const router = express.Router();
 
@@ -7,11 +8,10 @@ const mongoose = require('mongoose');
 const Document = mongoose.model('Document');
 const Review = mongoose.model('Review');
 
-const documentFactory = require('../lib/document_factory');
-const reviewFactory = require('../lib/review_factory');
-
 const access = require('../lib/access');
 const actionLogger = require('../lib/action_logger');
+const documentFactory = require('../lib/document_factory');
+const reviewFactory = require('../lib/review_factory');
 
 router.route('/review/:review_id')
     .get(function(req, res, next) {
@@ -70,6 +70,7 @@ router.route('/review').post(function(req, res, next) {
   reviewFactory.getReview(req.body).then(function(newReview) {
     newReview.recalculateDates();
     newReview.save().then(function() {
+      //put email here to send to department chairs, review>program>department>department chairs
       res.status(201);
       res.json(newReview);
       winston.info(`Created review with id ${newReview._id}`);
@@ -188,7 +189,7 @@ router.get('/reviews', access.allowGroups(['Administrators', 'Program Review Sub
     query.deleted = null;
   }
 
-  Review.find(query, 'program startDate leadReviewers deleted').exec().then(function(reviews) {
+  Review.find(query).exec().then(function(reviews) {
     res.json(reviews);
   }, function(err) {
     next(err);

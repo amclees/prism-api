@@ -80,6 +80,7 @@ const nodeValidators = {
   'finishDateOverriden': _.isBoolean,
   'finalized': _.isBoolean,
   'email': validEmailSettings,
+  'emailSent': _.isBoolean,
   'document': validObjectId,
   'prerequisites': validPrerequisites,
   'title': _.isString

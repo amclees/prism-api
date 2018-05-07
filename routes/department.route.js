@@ -1,4 +1,5 @@
 const winston = require('winston');
+
 const express = require('express');
 const router = express.Router();
 
@@ -16,6 +17,9 @@ router.route('/department/:department_id')
         if (department === null) {
           next();
           return;
+        }
+        for (let i = 0; i < department.chairs.length; i++) {
+          department.chairs[i] = department.chairs[i].excludeFields();
         }
         res.json(department);
       }, function(err) {
@@ -81,6 +85,11 @@ router.route('/department/:department_id/programs')
 
 router.get('/departments', access.allowGroups(['Administrators']), function(req, res, next) {
   Department.find().populate('chairs').exec().then(function(departments) {
+    for (let department of departments) {
+      for (let i = 0; i < department.chairs.length; i++) {
+        department.chairs[i] = department.chairs[i].excludeFields();
+      }
+    }
     res.json(departments);
   }, function(err) {
     next(err);
