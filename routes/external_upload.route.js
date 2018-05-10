@@ -4,14 +4,10 @@ const winston = require('winston');
 
 const express = require('express');
 const router = express.Router();
-const nodemailer = require('nodemailer');
-const hbs = require('nodemailer-express-handlebars');
 
 const mongoose = require('mongoose');
 const Document = mongoose.model('Document');
-const User = mongoose.model('User');
 const ExternalUpload = mongoose.model('ExternalUpload');
-
 
 const access = require('../lib/access');
 const settings = require('../lib/config/settings');
@@ -73,56 +69,6 @@ router.route('/external-upload/:token')
             document.save().then(function() {
               externalUpload.completed = true;
               externalUpload.save().then(function() {
-<<<<<<< HEAD
-                //send email
-                User.findById(externalUpload.user).then(function(user) {
-                  nodemailer.createTestAccount((err, account) => {
-                    if (err) {
-                      console.error('Failed to create a testing account. ' + err.message);
-                      return process.exit(1);
-                    }
-
-                    console.log('Credentials obtained, sending message...');
-
-
-                    let transporter = nodemailer.createTransport({
-                      host: account.smtp.host,
-                      port: account.smtp.port,
-                      secure: account.smtp.secure,
-                      auth: {
-                        user: account.user,
-                        pass: account.pass
-                      }
-                    });
-                    transporter.use('compile', hbs({
-                                      viewPath: 'templates',
-                                      extName: '.hbs'
-                                    }));
-
-
-                    let message = {
-                      from: 'allen3just@yahoo.com',
-                      to: `${user.email}`,
-                      subject: 'CSULA External Review Link',
-                      template: '../lib/templates/external_upload',
-                      context: {
-                        name: `${user.name}`,
-                        token: `${externalUpload.token}`
-                      }
-                    };
-
-                    transporter.sendMail(message, (err, info) => {
-                      if (err) {
-                        console.log('Error occurred. ' + err.message);
-                        return process.exit(1);
-                      }
-
-                      console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-                    });
-                  });
-                });
-=======
->>>>>>> upstream/master
                 res.sendStatus(200);
               }, next);
             }, function(err) {
@@ -134,8 +80,6 @@ router.route('/external-upload/:token')
       });
     });
 
-<<<<<<< HEAD
-=======
 router.post('/external-upload/:token/cancel', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   ExternalUpload.findOneAndUpdate({token: req.params.token}, {$set: {disabled: true}}, {new: true}).then(function(externalUpload) {
     if (externalUpload === null) {
@@ -146,5 +90,4 @@ router.post('/external-upload/:token/cancel', access.allowGroups(['Administrator
   }, next);
 });
 
->>>>>>> upstream/master
 module.exports = router;
