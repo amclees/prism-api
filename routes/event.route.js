@@ -83,11 +83,8 @@ router.route('/event').post(access.allowGroups(['Administrators', 'Program Revie
        })
       .then(function(newEvent) {
         //send out email of event
-        console.log('test1');
         for (let id of newEvent.people) {
-          console.log('test2');
           User.findById(id).then(function(user) {
-            console.log('test3');
             let transporter = nodemailer.createTransport({
               service: 'gmail',
               auth: {
