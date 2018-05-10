@@ -9,6 +9,10 @@ const externalUploadSchema = new mongoose.Schema({
     minlength: 64,
     maxlength: 64
   },
+  message: {
+    type: String,
+    required: true
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -19,7 +23,8 @@ const externalUploadSchema = new mongoose.Schema({
     required: true,
     ref: 'Document'
   },
-  completed: Boolean
+  completed: Boolean,
+  disabled: Boolean
 },
                                                  {usePushEach: true});
 

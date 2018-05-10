@@ -18,8 +18,7 @@ const hbs = require('nodemailer-express-handlebars');
 
 
 router.route('/event/:event_id')
-    .all(access.allowGroups(['Administrators']))
-    .get(function(req, res, next) {
+    .get(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
       Event.findById(req.params.event_id).populate('documents').then(function(event) {
         if (event === null) {
           next();
@@ -30,7 +29,7 @@ router.route('/event/:event_id')
         next(err);
       });
     })
-    .patch(function(req, res, next) {
+    .patch(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
       Event.findById(req.params.event_id).then(function(event) {
         if (event === null) {
           next();
@@ -59,7 +58,7 @@ router.route('/event/:event_id')
         next(err);
       });
     })
-    .delete(function(req, res, next) {
+    .delete(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
       Event.findByIdAndRemove(req.params.event_id).then(function(removedEvent) {
         if (removedEvent) {
           res.sendStatus(204);
@@ -74,7 +73,7 @@ router.route('/event/:event_id')
       });
     });
 
-router.route('/event').post(access.allowGroups(['Administrators']), function(req, res, next) {
+router.route('/event').post(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   Event.create({
          'title': req.body.title,
          'date': req.body.date,
@@ -191,7 +190,7 @@ router.route('/event').post(access.allowGroups(['Administrators']), function(req
       });
 });
 
-router.post('/event/:event_id/cancel', access.allowGroups(['Administrators']), function(req, res, next) {
+router.post('/event/:event_id/cancel', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   Event.findById(req.params.event_id).then(function(event) {
     if (event.canceled) {
       res.sendStatus(405);
@@ -208,7 +207,7 @@ router.post('/event/:event_id/cancel', access.allowGroups(['Administrators']), f
   });
 });
 
-router.post('/event/:event_id/document', access.allowGroups(['Administrators']), function(req, res, next) {
+router.post('/event/:event_id/document', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   Event.findById(req.params.event_id).then(function(event) {
     event.addDocument(req.body.title).then(function(createdDocument) {
       res.json(createdDocument.excludeFields());
@@ -222,7 +221,7 @@ router.post('/event/:event_id/document', access.allowGroups(['Administrators']),
   });
 });
 
-router.delete('/event/:event_id/document/:document', access.allowGroups(['Administrators']), function(req, res, next) {
+router.delete('/event/:event_id/document/:document', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   Event.findById(req.params.event_id).populate('documents').then(function(event) {
     event.deleteDocument(req.params.document).then(function(removedDocument) {
       res.sendStatus(204);
@@ -236,7 +235,7 @@ router.delete('/event/:event_id/document/:document', access.allowGroups(['Admini
   });
 });
 
-router.get('/events', access.allowGroups(['Administrators']), function(req, res, next) {
+router.get('/events', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   Event.find().exec().then(function(events) {
     res.json(events);
   }, function(err) {

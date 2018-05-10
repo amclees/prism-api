@@ -1,5 +1,6 @@
 global.Promise = require('bluebird');
 
+const { spawn } = require('child_process');
 require('dotenv').config();
 const mongoose = require('mongoose');
 
@@ -16,7 +17,7 @@ module.exports = function() {
       const userFactory = require('../lib/user_factory');
 
       createCoreTemplates().then(function() {
-        createGroups(['Administrators', 'Program Review Subcommittee']).then(function() {
+        createGroups(['Administrators', 'Program Review Subcommittee', 'University']).then(function() {
 
           userFactory.getUser({
                        username: 'root',
@@ -30,7 +31,9 @@ module.exports = function() {
                        root: true
                      })
               .then(function() {
-                resolve(rootPassword);
+                addPrograms().then(() => {
+                  resolve(rootPassword);
+                }, reject);
               }, reject);
         }, reject);
       }, reject);
@@ -46,6 +49,14 @@ if (!module.parent) {
     console.log('Error setting up production db');
     console.log(err);
     process.exit(1);
+  });
+}
+
+function addPrograms() {
+  return new Promise(function(resolve) {
+    spawn('node', ['./bin/create_university_hierarchy.js']).on('exit', () => {
+      resolve();
+    });
   });
 }
 

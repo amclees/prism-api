@@ -88,7 +88,7 @@ Example request and response bodies from the POST `/login` endpoint:
 
 The root URL for the API is `/api` and the default port for the server is 3000.
 
-All endpoints except POST `/login` require authentication via Passport.
+All endpoints except POST `/login` and external upload endpoints require authentication via Passport.
 
 To authenticate, include the `Authorization` header in all HTTP requests to the API. The format except is `Authorization: Bearer :token` where `:token` is the token received from the POST `/login` endpoint. The cookie `jwtToken` can also be included with the value of the token for authentication.
 

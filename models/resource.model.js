@@ -1,7 +1,6 @@
 'use strict';
 
 const mongoose = require('mongoose');
-const _ = require('lodash');
 
 const resourceSchema = new mongoose.Schema({
   title: {
@@ -32,12 +31,13 @@ const resourceSchema = new mongoose.Schema({
   },
   groups: {
     type: [String],
-    default: ['Administrators']
+    default: ['Administrators', 'Program Review Subcommittee']
   }
 
 
 
-},                                  {usePushEach: true});
+},
+                                           {usePushEach: true});
 
 resourceSchema.methods.addFiles = function(message, user) {
   this.files.push({

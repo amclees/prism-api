@@ -47,7 +47,8 @@ const eventSchema = new mongoose.Schema({
 eventSchema.methods.addDocument = function(title) {
   return new Promise((resolve, reject) => {
     Document.create({
-              'title': title
+              'title': title,
+              'groups': ['Administrators', 'Program Review Subcommittee']
             })
         .then((createdDocument) => {
           this.documents.push(createdDocument._id);
@@ -81,33 +82,33 @@ eventSchema.methods.deleteDocument = function(document) {
 eventSchema.methods.changeDate = function(newDate, sendNotifications = true) {
   this.date = newDate;
   if (sendNotifications && this.sendNotifications) {
-    for (let id of this.people){
-      User.findById(id).then(function(user){
+    for (let id of this.people) {
+      User.findById(id).then(function(user) {
         nodemailer.createTestAccount((err, account) => {
-        if (err) {
+          if (err) {
             console.error('Failed to create a testing account. ' + err.message);
             return process.exit(1);
-        }
+          }
 
-        console.log('Credentials obtained, sending message...');
+          console.log('Credentials obtained, sending message...');
 
 
-        let transporter = nodemailer.createTransport({
+          let transporter = nodemailer.createTransport({
             host: account.smtp.host,
             port: account.smtp.port,
             secure: account.smtp.secure,
             auth: {
-                user: account.user,
-                pass: account.pass
+              user: account.user,
+              pass: account.pass
             }
-        });
-        transporter.use('compile', hbs ({
-            viewPath: 'templates',
-            extName: '.hbs'
-        }));
+          });
+          transporter.use('compile', hbs({
+                            viewPath: 'templates',
+                            extName: '.hbs'
+                          }));
 
 
-        let message = {
+          let message = {
             from: 'allen3just@yahoo.com',
             to: `${user.email}`,
             subject: 'Event Date Changed',
@@ -115,102 +116,102 @@ eventSchema.methods.changeDate = function(newDate, sendNotifications = true) {
             context: {
               title: this.title
             }
-        };
+          };
 
-        transporter.sendMail(message, (err, info) => {
+          transporter.sendMail(message, (err, info) => {
             if (err) {
-                console.log('Error occurred. ' + err.message);
-                return process.exit(1);
+              console.log('Error occurred. ' + err.message);
+              return process.exit(1);
             }
 
             console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+          });
         });
-    });
       });
     }
-    for (let groupid of this.groups){
-      Group.findById(groupid).then(function(group){
-      for (let id of group.members){
-        User.findById(id).then(function(user){
-        nodemailer.createTestAccount((err, account) => {
-        if (err) {
-            console.error('Failed to create a testing account. ' + err.message);
-            return process.exit(1);
+    for (let groupid of this.groups) {
+      Group.findById(groupid).then(function(group) {
+        for (let id of group.members) {
+          User.findById(id).then(function(user) {
+            nodemailer.createTestAccount((err, account) => {
+              if (err) {
+                console.error('Failed to create a testing account. ' + err.message);
+                return process.exit(1);
+              }
+
+              console.log('Credentials obtained, sending message...');
+
+
+              let transporter = nodemailer.createTransport({
+                host: account.smtp.host,
+                port: account.smtp.port,
+                secure: account.smtp.secure,
+                auth: {
+                  user: account.user,
+                  pass: account.pass
+                }
+              });
+              transporter.use('compile', hbs({
+                                viewPath: 'templates',
+                                extName: '.hbs'
+                              }));
+
+              let message = {
+                from: 'allen3just@yahoo.com',
+                to: `${user.email}`,
+                subject: 'Event Cancelled',
+                template: '../lib/templates/event_change_date',
+                context: {
+                  title: this.title
+                }
+              };
+
+              transporter.sendMail(message, (err, info) => {
+                if (err) {
+                  console.log('Error occurred. ' + err.message);
+                  return process.exit(1);
+                }
+
+                console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+              });
+            });
+          });
         }
-
-        console.log('Credentials obtained, sending message...');
-
-
-        let transporter = nodemailer.createTransport({
-            host: account.smtp.host,
-            port: account.smtp.port,
-            secure: account.smtp.secure,
-            auth: {
-                user: account.user,
-                pass: account.pass
-            }
-        });
-        transporter.use('compile', hbs ({
-            viewPath: 'templates',
-            extName: '.hbs'
-        }));
-
-        let message = {
-            from: 'allen3just@yahoo.com',
-            to: `${user.email}`,
-            subject: 'Event Cancelled',
-            template: '../lib/templates/event_change_date',
-            context: {
-              title: this.title
-            }
-        };
-
-        transporter.sendMail(message, (err, info) => {
-            if (err) {
-                console.log('Error occurred. ' + err.message);
-                return process.exit(1);
-            }
-
-            console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-        });
-    });
       });
     }
-  });
-  }
   }
 };
 
 eventSchema.methods.cancel = function() {
   this.canceled = true;
   if (this.sendNotifications) {
-    for (let id of this.people){
-      User.findById(id).then(function(user){
+    for (let id of this.people) {
+      User.findById(id).then(function(user) {
         nodemailer.createTestAccount((err, account) => {
-        if (err) {
+          if (err) {
             console.error('Failed to create a testing account. ' + err.message);
             return process.exit(1);
-        }
+          }
 
-        console.log('Credentials obtained, sending message...');
+          console.log('Credentials obtained, sending message...');
 
 
-        let transporter = nodemailer.createTransport({
+          let transporter = nodemailer.createTransport({
             host: account.smtp.host,
             port: account.smtp.port,
             secure: account.smtp.secure,
             auth: {
-                user: account.user,
-                pass: account.pass
+              user: account.user,
+              pass: account.pass
             }
-        });
-        transporter.use('compile', hbs ({
-            viewPath: 'templates',
-            extName: '.hbs'
-        }));
+          });
+          transporter.use('compile', hbs({
+                            viewPath: 'templates',
+                            extName: '.hbs'
+                          }));
 
 
-        let message = {
+          let message = {
             from: 'allen3just@yahoo.com',
             to: `${user.email}`,
             subject: 'Event Date Changed',
@@ -218,70 +219,69 @@ eventSchema.methods.cancel = function() {
             context: {
               title: this.title
             }
-        };
+          };
 
-        transporter.sendMail(message, (err, info) => {
+          transporter.sendMail(message, (err, info) => {
             if (err) {
-                console.log('Error occurred. ' + err.message);
-                return process.exit(1);
+              console.log('Error occurred. ' + err.message);
+              return process.exit(1);
             }
 
             console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+          });
         });
-    });
       });
     }
-    for (let groupid of this.groups){
-      Group.findById(groupid).then(function(group){
-      for (let id of group.members){
-        User.findById(id).then(function(user){
-        nodemailer.createTestAccount((err, account) => {
-        if (err) {
-            console.error('Failed to create a testing account. ' + err.message);
-            return process.exit(1);
+    for (let groupid of this.groups) {
+      Group.findById(groupid).then(function(group) {
+        for (let id of group.members) {
+          User.findById(id).then(function(user) {
+            nodemailer.createTestAccount((err, account) => {
+              if (err) {
+                console.error('Failed to create a testing account. ' + err.message);
+                return process.exit(1);
+              }
+
+              console.log('Credentials obtained, sending message...');
+
+
+              let transporter = nodemailer.createTransport({
+                host: account.smtp.host,
+                port: account.smtp.port,
+                secure: account.smtp.secure,
+                auth: {
+                  user: account.user,
+                  pass: account.pass
+                }
+              });
+              transporter.use('compile', hbs({
+                                viewPath: 'templates',
+                                extName: '.hbs'
+                              }));
+
+              let message = {
+                from: 'allen3just@yahoo.com',
+                to: `${user.email}`,
+                subject: 'Event Cancelled',
+                template: '../lib/templates/event_cancel',
+                context: {
+                  title: this.title
+                }
+              };
+
+              transporter.sendMail(message, (err, info) => {
+                if (err) {
+                  console.log('Error occurred. ' + err.message);
+                  return process.exit(1);
+                }
+
+                console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+              });
+            });
+          });
         }
-
-        console.log('Credentials obtained, sending message...');
-
-
-        let transporter = nodemailer.createTransport({
-            host: account.smtp.host,
-            port: account.smtp.port,
-            secure: account.smtp.secure,
-            auth: {
-                user: account.user,
-                pass: account.pass
-            }
-        });
-        transporter.use('compile', hbs ({
-            viewPath: 'templates',
-            extName: '.hbs'
-        }));
-
-        let message = {
-            from: 'allen3just@yahoo.com',
-            to: `${user.email}`,
-            subject: 'Event Cancelled',
-            template: '../lib/templates/event_cancel',
-            context: {
-              title: this.title
-            }
-        };
-
-        transporter.sendMail(message, (err, info) => {
-            if (err) {
-                console.log('Error occurred. ' + err.message);
-                return process.exit(1);
-            }
-
-            console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-        });
-    });
       });
     }
-  });
-  }
-
   }
 };
 

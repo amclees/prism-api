@@ -1,6 +1,6 @@
 {
   "name": "prs-api",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "CSULA PRS document review system REST API",
   "main": "index.js",
   "scripts": {
@@ -25,7 +25,7 @@
   "homepage": "https://github.com/amclees/prs-api#readme",
   "private": true,
   "dependencies": {
-    "bcrypt": "^1.0.3",
+    "bcrypt": "^2.0.1",
     "bluebird": "^3.5.1",
     "body-parser": "~1.18.2",
     "cookie-parser": "~1.4.3",
@@ -34,8 +34,10 @@
     "dotenv": "^4.0.0",
     "email-templates": "^3.3.3",
     "express": "~4.15.5",
+    "express-rate-limit": "^2.11.0",
     "grunt": "^1.0.1",
     "handlebars": "^4.0.11",
+    "hoek": "^5.0.3",
     "jsonwebtoken": "^8.1.0",
     "jwt-simple": "^0.5.1",
     "lodash": "^4.17.4",

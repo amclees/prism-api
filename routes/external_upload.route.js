@@ -4,14 +4,16 @@ const winston = require('winston');
 
 const express = require('express');
 const router = express.Router();
+const nodemailer = require('nodemailer');
+const hbs = require('nodemailer-express-handlebars');
 
 const mongoose = require('mongoose');
 const Document = mongoose.model('Document');
 const User = mongoose.model('User');
 const ExternalUpload = mongoose.model('ExternalUpload');
-const nodemailer = require('nodemailer');
-const hbs = require('nodemailer-express-handlebars');
 
+
+const access = require('../lib/access');
 const settings = require('../lib/config/settings');
 
 const upload =
@@ -49,7 +51,7 @@ router.route('/external-upload/:token')
           next();
           return;
         }
-        if (externalUpload.completed) {
+        if (externalUpload.completed || externalUpload.disabled) {
           res.sendStatus(400);
           return;
         }
@@ -71,6 +73,7 @@ router.route('/external-upload/:token')
             document.save().then(function() {
               externalUpload.completed = true;
               externalUpload.save().then(function() {
+<<<<<<< HEAD
                 //send email
                 User.findById(externalUpload.user).then(function(user) {
                   nodemailer.createTestAccount((err, account) => {
@@ -118,6 +121,8 @@ router.route('/external-upload/:token')
                     });
                   });
                 });
+=======
+>>>>>>> upstream/master
                 res.sendStatus(200);
               }, next);
             }, function(err) {
@@ -129,4 +134,17 @@ router.route('/external-upload/:token')
       });
     });
 
+<<<<<<< HEAD
+=======
+router.post('/external-upload/:token/cancel', access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
+  ExternalUpload.findOneAndUpdate({token: req.params.token}, {$set: {disabled: true}}, {new: true}).then(function(externalUpload) {
+    if (externalUpload === null) {
+      next();
+      return;
+    }
+    res.json(externalUpload);
+  }, next);
+});
+
+>>>>>>> upstream/master
 module.exports = router;

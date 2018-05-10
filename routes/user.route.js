@@ -7,6 +7,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const User = mongoose.model('User');
 
+const access = require('../lib/access');
 const tokenCache = require('../lib/token_cache');
 
 router.route('/user/:user_id')
@@ -22,11 +23,11 @@ router.route('/user/:user_id')
       });
     })
     .patch(function(req, res, next) {
+      if (req.user._id != req.params.user_id) {
+        res.sendStatus(403);
+        return;
+      }
       if (req.body.password) {
-        if (!req.user._id.equals(mongoose.Types.ObjectId(req.params.user_id))) {
-          res.sendStatus(403);
-          return;
-        }
         User.findById(req.params.user_id).then(function(user) {
           user.setPassword(req.body.password).then(function() {
             const update = _.pick(req.body, ['username', 'email', 'name', 'config']);
@@ -58,7 +59,7 @@ router.route('/user/:user_id')
         }, next);
       }
     })
-    .delete(function(req, res, next) {
+    .delete(access.allowGroups(['Administrators']), function(req, res, next) {
       User.findByIdAndUpdate(req.params.user_id, {$set: {disabled: true}}, {new: true, runValidators: true}).then(function(disabledUser) {
         if (disabledUser) {
           res.sendStatus(204);
@@ -72,7 +73,7 @@ router.route('/user/:user_id')
       });
     });
 
-router.post('/user', function(req, res, next) {
+router.post('/user', access.allowGroups(['Administrators']), function(req, res, next) {
   const newUser = _.pick(req.body, ['username', 'email', 'name', 'internal']);
   User.create(newUser).then(function(createdUser) {
     createdUser.setPassword(req.body.password).then(function() {
@@ -86,7 +87,6 @@ router.post('/user', function(req, res, next) {
 
 router.get('/users', function(req, res, next) {
   User.find().then((users) => {
-    // Once groups are attached to req, should allow admins to see disabled users
     res.json(_.map(_.reject(users, 'disabled'), function(user) {
       return user.excludeFields();
     }));

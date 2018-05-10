@@ -71,6 +71,17 @@ function getUsersForCreation() {
                          },
                          internal: true,
                          root: true
+                       },
+                        {
+                         username: 'testUniversity',
+                         password: 'password',
+                         email: 'email@example.com',
+                         name: {
+                           first: 'first name',
+                           last: 'last name'
+                         },
+                         groups: getGroupIds(['University']),
+                         internal: true,
                        }];
 
   let users = [];
