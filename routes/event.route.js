@@ -83,8 +83,11 @@ router.route('/event').post(access.allowGroups(['Administrators', 'Program Revie
        })
       .then(function(newEvent) {
         //send out email of event
+        console.log('test1');
         for (let id of newEvent.people) {
+          console.log('test2');
           User.findById(id).then(function(user) {
+            console.log('test3');
             let transporter = nodemailer.createTransport({
               service: 'gmail',
               auth: {
@@ -101,7 +104,7 @@ router.route('/event').post(access.allowGroups(['Administrators', 'Program Revie
               from: 'prismtestserver@gmail.com',
               to: 'allen3just@yahoo.com',
               subject: 'Notification email',
-              template: '../lib/templates/review_created',
+              template: '../lib/templates/event_created',
               context: {
                 first: user.name.first,
                 last: user.name.last,
@@ -137,7 +140,7 @@ router.route('/event').post(access.allowGroups(['Administrators', 'Program Revie
                   from: 'prismtestserver@gmail.com',
                   to: 'allen3just@yahoo.com',
                   subject: 'Notification email',
-                  template: '../lib/templates/review_created',
+                  template: '../lib/templates/event_created',
                   context: {
                     first: user.name.first,
                     last: user.name.last,
