@@ -54,7 +54,7 @@ app.use('/api', new RateLimit({
 }));
 
 app.use(function(req, res, next) {
-  if (req.path === '/api/login' || req.path.indexOf('/api/external-upload') === 0) {
+  if (req.path === '/api/login' || (req.path.indexOf('/api/external-upload') === 0 && req.path.indexOf('cancel') === -1)) {
     next();
   } else {
     authMiddleware(req, res, next);
