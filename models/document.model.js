@@ -54,7 +54,7 @@ const documentSchema = new mongoose.Schema({
         required: true
       },
       creationDate: {
-        type: String,
+        type: Date,
         required: true
       },
       revision: {

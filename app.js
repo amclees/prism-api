@@ -42,16 +42,16 @@ app.get('*', function(req, res, next) {
 });
 
 app.use('/api/login', new RateLimit({
-  windowMs: settings.rateLimitWindow,
-  max: settings.loginRequestLimit,
-  delayMs: 0
-}));
+          windowMs: settings.rateLimitWindow,
+          max: settings.loginRequestLimit,
+          delayMs: 0
+        }));
 
 app.use('/api', new RateLimit({
-  windowMs: settings.rateLimitWindow,
-  max: settings.requestLimit,
-  delayMs: 0
-}));
+          windowMs: settings.rateLimitWindow,
+          max: settings.requestLimit,
+          delayMs: 0
+        }));
 
 app.use(function(req, res, next) {
   if (req.path === '/api/login' || (req.path.indexOf('/api/external-upload') === 0 && req.path.indexOf('cancel') === -1)) {
@@ -71,7 +71,7 @@ app.use(function(req, res, next) {
 for (let route of routes) {
   app.use('/api', route);
 }
-const cronexample = require('./lib/cron');
+require('./lib/cron');
 require('./error_handler')(app);
 
 // Teardown can be passed any modules necessary for proper teardown

@@ -6,10 +6,16 @@ const router = express.Router();
 
 const mongoose = require('mongoose');
 const Event = mongoose.model('Event');
+const User = mongoose.model('User');
+const Group = mongoose.model('Group');
 
 const access = require('../lib/access');
 const actionLogger = require('../lib/action_logger');
 const subscribeMiddlewareFactory = require('../lib/subscribe_middleware_factory');
+
+const nodemailer = require('nodemailer');
+const hbs = require('nodemailer-express-handlebars');
+
 
 router.route('/event/:event_id')
     .get(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
@@ -70,9 +76,84 @@ router.route('/event/:event_id')
 router.route('/event').post(access.allowGroups(['Administrators', 'Program Review Subcommittee']), function(req, res, next) {
   Event.create({
          'title': req.body.title,
-         'date': req.body.date
+         'date': req.body.date,
+         'people': req.body.people,
+         'documents': req.body.documents,
+         'groups': req.body.groups
        })
       .then(function(newEvent) {
+        //send out email of event
+        for (let id of newEvent.people) {
+          User.findById(id).then(function(user) {
+            let transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: {
+                user: 'prismtestserver@gmail.com',
+                pass: 'Answer30'
+              }
+            });
+            transporter.use('compile', hbs({
+                              viewPath: 'templates',
+                              extName: '.hbs'
+                            }));
+
+            let message = {
+              from: 'prismtestserver@gmail.com',
+              to: 'allen3just@yahoo.com',
+              subject: 'Notification email',
+              template: '../lib/templates/event_created',
+              context: {
+                first: user.name.first,
+                last: user.name.last,
+                title: newEvent.title
+              }
+            };
+
+            transporter.sendMail(message, (err, info) => {
+              if (err) {
+                console.log('Error occurred. ' + err.message);
+                return process.exit(1);
+              }
+            });
+          });
+        }
+        for (let groupid of newEvent.groups) {
+          Group.findById(groupid).then(function(group) {
+            for (let id of group.members) {
+              User.findById(id).then(function(user) {
+                let transporter = nodemailer.createTransport({
+                  service: 'gmail',
+                  auth: {
+                    user: 'prismtestserver@gmail.com',
+                    pass: 'Answer30'
+                  }
+                });
+                transporter.use('compile', hbs({
+                                  viewPath: 'templates',
+                                  extName: '.hbs'
+                                }));
+
+                let message = {
+                  from: 'prismtestserver@gmail.com',
+                  to: 'allen3just@yahoo.com',
+                  subject: 'Notification email',
+                  template: '../lib/templates/event_created',
+                  context: {
+                    first: user.name.first,
+                    last: user.name.last,
+                    title: newEvent.title
+                  }
+                };
+                transporter.sendMail(message, (err, info) => {
+                  if (err) {
+                    console.log('Error occurred. ' + err.message);
+                    return process.exit(1);
+                  }
+                });
+              });
+            }
+          });
+        }
         res.status(201);
         res.json(newEvent);
         winston.info(`Created event with id ${newEvent._id}`);

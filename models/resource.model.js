@@ -35,7 +35,9 @@ const resourceSchema = new mongoose.Schema({
   }
 
 
-},                                  {usePushEach: true});
+
+},
+                                           {usePushEach: true});
 
 resourceSchema.methods.addFiles = function(message, user) {
   this.files.push({

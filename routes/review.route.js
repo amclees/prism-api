@@ -3,10 +3,15 @@ const winston = require('winston');
 
 const express = require('express');
 const router = express.Router();
+const nodemailer = require('nodemailer');
+const hbs = require('nodemailer-express-handlebars');
 
 const mongoose = require('mongoose');
 const Document = mongoose.model('Document');
 const Review = mongoose.model('Review');
+const Program = mongoose.model('Program');
+const Department = mongoose.model('Department');
+const User = mongoose.model('User');
 
 const access = require('../lib/access');
 const actionLogger = require('../lib/action_logger');
@@ -76,7 +81,58 @@ router.post('/review/:review_id/restore', access.allowGroups(['Administrators'])
 router.route('/review').post(access.allowGroups(['Administrators']), function(req, res, next) {
   reviewFactory.getReview(req.body).then(function(newReview) {
     newReview.recalculateDates();
+    console.log('review created');
     newReview.save().then(function() {
+      console.log('review created1');
+      //put email here to send to department chairs, review>program>department>department chairs
+      Program.findById(newReview.program).then(function(program) {
+        console.log('review created2');
+        Department.findById(program.department).then(function(dept) {
+          console.log('review created3');
+          for (let id of dept.chairs) {
+            console.log('review created4');
+            User.findById(id).then(function(user) {
+              console.log('review created5');
+
+              // Create a SMTP transporter object
+              let transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                  user: 'prismtestserver@gmail.com',
+                  pass: 'Answer30'
+                }
+              });
+              transporter.use('compile', hbs({
+                                viewPath: 'templates',
+                                extName: '.hbs'
+                              }));
+
+              let message = {
+                from: 'prismtestserver@gmail.com',
+                to: 'allen3just@yahoo.com',
+                subject: 'Notification email',
+                template: '../lib/templates/review_created',
+                context: {
+                  first: user.name.first,
+                  last: user.name.last,
+                  program: program.name,
+                  reviewID: newReview._id
+                }
+              };
+
+              transporter.sendMail(message, (err, info) => {
+                if (err) {
+                  console.log('Error occurred. ' + err.message);
+                  return process.exit(1);
+                } else {
+                  console.log(info);
+                }
+              });
+
+            });
+          }
+        });
+      });
       res.status(201);
       res.json(newReview);
       winston.info(`Created review with id ${newReview._id}`);
